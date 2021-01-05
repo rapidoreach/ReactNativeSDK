@@ -1,4 +1,4 @@
-package com.theoremreach;
+package com.rapidoreach;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,7 +9,7 @@ import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.uimanager.ViewManager;
 import com.facebook.react.bridge.JavaScriptModule;
-public class RNTheoremReachPackage implements ReactPackage {
+public class RNRapidoReachPackage implements ReactPackage {
 
     @Override
     public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
@@ -21,7 +21,7 @@ public class RNTheoremReachPackage implements ReactPackage {
                                 ReactApplicationContext reactContext) {
       List<NativeModule> modules = new ArrayList<>();
 
-      modules.add(new RNTheoremReachModule(reactContext));
+      modules.add(new RNRapidoReachModule(reactContext));
 
       return modules;
     }

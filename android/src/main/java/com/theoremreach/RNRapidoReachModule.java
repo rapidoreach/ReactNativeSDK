@@ -1,7 +1,6 @@
-package com.theoremreach;
+package com.rapidoreach;
 
-// import androidx.annotation.Nullable;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -11,18 +10,18 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
-import theoremreach.com.theoremreach.TheoremReach;
-import theoremreach.com.theoremreach.TheoremReachRewardListener;
-import theoremreach.com.theoremreach.TheoremReachSurveyListener;
-import theoremreach.com.theoremreach.TheoremReachSurveyAvailableListener;
+import rapidoreach.com.rapidoreach.RapidoReach;
+import rapidoreach.com.rapidoreach.RapidoReachRewardListener;
+import rapidoreach.com.rapidoreach.RapidoReachSurveyListener;
+import rapidoreach.com.rapidoreach.RapidoReachSurveyAvailableListener;
 
-public class RNTheoremReachModule extends ReactContextBaseJavaModule
-        implements LifecycleEventListener, TheoremReachRewardListener, TheoremReachSurveyListener, TheoremReachSurveyAvailableListener {
+public class RNRapidoReachModule extends ReactContextBaseJavaModule
+        implements LifecycleEventListener, RapidoReachRewardListener, RapidoReachSurveyListener, RapidoReachSurveyAvailableListener {
 
     private final ReactApplicationContext reactContext;
     private boolean isAppInitialized = false;
 
-    public RNTheoremReachModule(ReactApplicationContext reactContext) {
+    public RNRapidoReachModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
         reactContext.addLifecycleEventListener(this);
@@ -30,31 +29,31 @@ public class RNTheoremReachModule extends ReactContextBaseJavaModule
 
     @Override
     public String getName() {
-        return "RNTheoremReach";
+        return "RNRapidoReach";
     }
 
     @ReactMethod
     public void initWithApiKeyAndUserId(String apiKey, String userId) {
-        TheoremReach.initWithApiKeyAndUserIdAndActivityContext(apiKey, userId, getCurrentActivity());
+        RapidoReach.initWithApiKeyAndUserIdAndActivityContext(apiKey, userId, getCurrentActivity());
 
         // The below code is required because onResume is called before this method by default
         // and it should be prevented for the correct working of the SDK
-        TheoremReach.getInstance().onResume(getCurrentActivity());
+        RapidoReach.getInstance().onResume(getCurrentActivity());
         isAppInitialized = true;
 
-        TheoremReach.getInstance().setTheoremReachRewardListener(this);
-        TheoremReach.getInstance().setTheoremReachSurveyListener(this);
-        TheoremReach.getInstance().setTheoremReachSurveyAvailableListener(this);
+        RapidoReach.getInstance().setRapidoReachRewardListener(this);
+        RapidoReach.getInstance().setRapidoReachSurveyListener(this);
+        RapidoReach.getInstance().setRapidoReachSurveyAvailableListener(this);
     }
 
     @ReactMethod
     public void showRewardCenter() {
-        TheoremReach.getInstance().showRewardCenter();
+        RapidoReach.getInstance().showRewardCenter();
     }
 
     @ReactMethod
     public void isSurveyAvailable(Callback cb) {
-        cb.invoke(TheoremReach.getInstance().isSurveyAvailable());
+        cb.invoke(RapidoReach.getInstance().isSurveyAvailable());
     }
 
     /* Callbacks */
@@ -83,8 +82,8 @@ public class RNTheoremReachModule extends ReactContextBaseJavaModule
     }
 
     @Override
-    public void theoremreachSurveyAvailable(boolean surveyAvailable) {
-        sendEvent(this.reactContext, "theoremreachSurveyAvailable", surveyAvailable);
+    public void rapidoreachSurveyAvailable(boolean surveyAvailable) {
+        sendEvent(this.reactContext, "rapidoreachSurveyAvailable", surveyAvailable);
     }
 
     /* Lifecycle methods */
@@ -92,13 +91,13 @@ public class RNTheoremReachModule extends ReactContextBaseJavaModule
     @Override
     public void onHostResume() {
         if (isAppInitialized) {
-            TheoremReach.getInstance().onResume(getCurrentActivity());
+            RapidoReach.getInstance().onResume(getCurrentActivity());
         }
     }
 
     @Override
     public void onHostPause() {
-        TheoremReach.getInstance().onPause();
+        RapidoReach.getInstance().onPause();
     }
 
     @Override

@@ -1,6 +1,6 @@
 {
-  "name": "react-native-theorem-reach",
-  "version": "3.5.0",
+  "name": "@rapidoreachnpm/react-native-rapidoreach",
+  "version": "1.0.0",
   "description": "Monetize your users through rewarded surveys!",
   "main": "index.js",
   "scripts": {
@@ -8,18 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/theoremreach/ReactNativeSDK.git"
+    "url": "https://github.com/rapidoreach/ReactNativeSDK.git"
   },
   "keywords": [
     "react-native",
-    "theoremreach",
-    "theorem reach",
+    "rapidoreach",
+    "rapido reach",
     "advertising",
     "monetization",
     "survey",
     "surveys"
   ],
-  "author": "TheoremReach",
+  "author": "RapidoReach",
   "license": "Commercial",
   "peerDependencies": {
     "react-native": ">= 0.40.0"

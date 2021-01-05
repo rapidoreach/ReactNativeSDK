@@ -1,7 +1,7 @@
 import { NativeEventEmitter, NativeModules } from 'react-native';
 
-const { RNTheoremReach } = NativeModules;
-const TheoremReachEventEmitter = new NativeEventEmitter(RNTheoremReach);
+const { RNRapidoReach } = NativeModules;
+const RapidoReachEventEmitter = new NativeEventEmitter(RNRapidoReach);
 
-export default RNTheoremReach;
-export { TheoremReachEventEmitter };
+export default RNRapidoReach;
+export { RapidoReachEventEmitter };

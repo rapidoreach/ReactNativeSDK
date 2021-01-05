@@ -1,6 +1,6 @@
-#import "RNTheoremReach.h"
+#import "RNRapidoReach.h"
 
-@implementation RNTheoremReach
+@implementation RNRapidoReach
 
 bool hasListeners;
 
@@ -8,32 +8,32 @@ bool hasListeners;
 {
     return dispatch_get_main_queue();
 }
-RCT_EXPORT_MODULE()
+RCT_EXPORT_MODULE();
 
 - (NSArray<NSString *> *)supportedEvents
 {
-    return @[@"onReward", @"onRewardCenterOpened", @"onRewardCenterClosed", @"theoremreachSurveyAvailable"];
+    return @[@"onReward", @"onRewardCenterOpened", @"onRewardCenterClosed", @"rapidoreachSurveyAvailable"];
 }
 
 RCT_EXPORT_METHOD(initWithApiKeyAndUserId:(NSString *)apiKey userId:(NSString *)userId) {
-    [TheoremReach initWithApiKey:apiKey userId:userId];
+    [RapidoReach initWithApiKey:apiKey userId:userId];
     
     /* Set delegate for receiving award callbacks */
-    [[TheoremReach getInstance] setRewardListenerDelegate:self];
+    [[RapidoReach getInstance] setRewardListenerDelegate:self];
     
     /* Set delegate for receiving survey callbacks */
-    [[TheoremReach getInstance] setSurveyListenerDelegate:self];
+    [[RapidoReach getInstance] setSurveyListenerDelegate:self];
 
     /* Set delegate for receiving survey available callback */
-    [[TheoremReach getInstance] setSurveyAvailableDelegate:self];
+    [[RapidoReach getInstance] setSurveyAvailableDelegate:self];
 }
 
 RCT_EXPORT_METHOD(showRewardCenter) {
-    [TheoremReach showRewardCenter];
+    [RapidoReach showRewardCenter];
 }
 
 RCT_EXPORT_METHOD(isSurveyAvailable:(RCTResponseSenderBlock)callback) {
-    BOOL isSurveyAvailable = [[TheoremReach getInstance] isSurveyAvailable];
+    BOOL isSurveyAvailable = [[RapidoReach getInstance] isSurveyAvailable];
     NSNumber *paramObject = [NSNumber numberWithBool:isSurveyAvailable];
     callback([NSArray arrayWithObject:paramObject]);
 }
@@ -58,9 +58,9 @@ RCT_EXPORT_METHOD(isSurveyAvailable:(RCTResponseSenderBlock)callback) {
     }
 }
 
-- (void)theoremreachSurveyAvailable: (BOOL)surveyAvailable {
+- (void)rapidoreachSurveyAvailable: (BOOL)surveyAvailable {
     if (hasListeners) { // Only send events if anyone is listening
-        [self sendEventWithName:@"theoremreachSurveyAvailable" body:[NSNumber numberWithBool:surveyAvailable]];
+        [self sendEventWithName:@"rapidoreachSurveyAvailable" body:[NSNumber numberWithBool:surveyAvailable]];
     }
 }
 

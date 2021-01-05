@@ -10,8 +10,8 @@
 #import <React/RCTEventEmitter.h>
 #endif
 
-#import <TheoremReachSDK/TheoremReach.h>
+#import <RapidoReachSDK/RapidoReach.h>
 
-@interface RNTheoremReach : RCTEventEmitter <RCTBridgeModule, TheoremReachRewardDelegate, TheoremReachSurveyDelegate, TheoremReachSurveyAvailableDelegate>
+@interface RNRapidoReach : RCTEventEmitter <RCTBridgeModule, RapidoReachRewardDelegate, RapidoReachSurveyDelegate, RapidoReachSurveyAvailableDelegate>
 
 @end
