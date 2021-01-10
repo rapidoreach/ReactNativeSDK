@@ -1,6 +1,6 @@
 {
   "name": "@rapidoreachsdk/react-native-rapidoreach",
-  "version": "3.5.4",
+  "version": "1.0.0",
   "description": "Monetize your users through rewarded surveys!",
   "main": "index.js",
   "scripts": {
