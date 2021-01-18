@@ -1,13 +1,14 @@
 //
 //  RNRapidoReach.swift
-//  AwesomeProject
+//  RNRapidoReach
 //
-//  Created by Vikash Kumar on 13/01/21.
+//  Created by Vikash Kumar on 17/01/21.
 //
+
 
 import Foundation
 import UIKit
-import React
+//import React
 import RapidoReach
 @objc(RNRapidoReach)
 
@@ -22,24 +23,6 @@ class RNRapidoReach: NSObject {
     return true;
   }
 
-//  
-  @objc
-  func ShowMessage(_ message:NSString, duration:Double) -> Void {
-    let alert = UIAlertController(title:nil, message: message as String, preferredStyle: .alert);
-    let seconds:Double = duration;
-    alert.view.backgroundColor = .black
-    alert.view.alpha = 0.5
-    alert.view.layer.cornerRadius = 14
-    
-    DispatchQueue.main.async {
-      (UIApplication.shared.delegate as? AppDelegate)?.window.rootViewController?.present(alert, animated: true, completion: nil);
-    }
-    
-    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + seconds, execute: {
-      alert.dismiss(animated: true, completion: nil);
-    })
-  }
-  
   @objc
   func initWithApiKeyAndUserId(_ apiKey:NSString, userId:NSString) -> Void {
       // Override point for customization after application launch.
@@ -84,9 +67,18 @@ class RNRapidoReach: NSObject {
     }
     RapidoReach.shared.presentSurvey(iframeController!)
   }
+  
 }
 
 extension RNRapidoReach: RapidoReachDelegate {
+  func didFinishSurvey() {
+    
+  }
+  
+  func didCancelSurvey() {
+    
+  }
+  
   func didGetError(_ error: RapidoReachError) {
     
   }
@@ -142,6 +134,8 @@ class RapidoReachEventEmitter: RCTEventEmitter {
           print("Native test  rapidoreachSurveyAvailable");
          sendEvent(withName: "rapidoreachSurveyAvailable", body: "reward")
       }
+  
+  
     
     override func supportedEvents() -> [String]! {
       return ["onReward", "onRewardCenterOpened", "onRewardCenterClosed", "rapidoreachSurveyAvailable", "rapidoreachSurveyAvailable"]
