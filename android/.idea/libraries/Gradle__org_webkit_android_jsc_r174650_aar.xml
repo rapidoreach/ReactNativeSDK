@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Gradle: org.webkit:android-jsc:r174650@aar">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d08512b3f924a845c2de1bf22edb9464/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d29075352d7fa597578cfdaf63406147/android-jsc-r174650/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d29075352d7fa597578cfdaf63406147/android-jsc-r174650/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d29075352d7fa597578cfdaf63406147/android-jsc-r174650/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d29075352d7fa597578cfdaf63406147/jetified-android-jsc-r174650/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d29075352d7fa597578cfdaf63406147/jetified-android-jsc-r174650/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/d29075352d7fa597578cfdaf63406147/jetified-android-jsc-r174650/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
