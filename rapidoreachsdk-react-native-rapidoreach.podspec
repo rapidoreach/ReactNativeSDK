@@ -4,11 +4,11 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
   s.name         = "rapidoreachsdk-react-native-rapidoreach"
-  s.version      = package["1.0.2"]
-  s.summary      = package["Monetize your users through rewarded surveys!"]
-  s.homepage     = package["https://rapidoreach.com"]
-  s.license      = package["MIT"]
-  s.authors      = package["Vikash Kumar"]
+  s.version      = package["version"]
+  s.summary      = package["description"]
+  s.homepage     = package["homepage"]
+  s.license      = package["license"]
+  s.authors      = package["author"]
 
   s.platforms    = { :ios => "10.0" }
   s.source       = { :git => "https://github.com/rapidoreach/ReactNativeSDK.git", :tag => "#{s.version}" }
