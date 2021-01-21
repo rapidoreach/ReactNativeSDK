@@ -21,16 +21,21 @@ class RNRapidoReach: NSObject {
       print("%d REWARD", reward);
       RapidoReachEventEmitter.shared?.onReward(reward: reward)
     }
+    RapidoReach.shared.setsurveysAvailableCallback { (available:Bool) in
+      print("Rapido Reach Survey Available" );
+//      RNRapidoReach.EventEmitter.sendEvent(withName: "onRewardCenterClosed", body: nil)
+      RapidoReachEventEmitter.shared?.rapidoreachSurveyAvailable(available)
+    }
+    RapidoReach.shared.setrewardCenterOpenedCallback {
+      print("Reward centre opened")
+      RapidoReachEventEmitter.shared?.onRewardCenterOpened()
+    }
     RapidoReach.shared.setrewardCenterClosedCallback {
       print("Reward centre closed" );
 //      RNRapidoReach.EventEmitter.sendEvent(withName: "onRewardCenterClosed", body: nil)
       RapidoReachEventEmitter.shared?.onRewardCenterClosed()
 
 
-    }
-    RapidoReach.shared.setrewardCenterOpenedCallback {
-      print("Reward centre opened")
-      RapidoReachEventEmitter.shared?.onRewardCenterOpened()
     }
     RapidoReach.shared.configure(apiKey: apiKey as String, user: userId as String)
     RapidoReach.shared.fetchAppUserID()
@@ -127,14 +132,13 @@ class RapidoReachEventEmitter: RCTEventEmitter {
       }
 
       @objc
-      func rapidoreachSurveyAvailable()  {
+      func rapidoreachSurveyAvailable(available: Bool)  {
           print("Native test  rapidoreachSurveyAvailable");
-         sendEvent(withName: "rapidoreachSurveyAvailable", body: "reward")
+         sendEvent(withName: "rapidoreachSurveyAvailable", body: available? "true" : "false")
       }
-  
-  
+    
     
     override func supportedEvents() -> [String]! {
-      return ["onReward", "onRewardCenterOpened", "onRewardCenterClosed", "rapidoreachSurveyAvailable", "rapidoreachSurveyAvailable"]
+      return ["onReward", "onRewardCenterOpened", "onRewardCenterClosed", "rapidoreachSurveyAvailable"]
     }
 }
