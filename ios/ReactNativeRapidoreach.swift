@@ -1,7 +1,7 @@
 
 import Foundation
 import UIKit
-import RapidoReach
+import RapidoReachSDK
 @objc(RNRapidoReach)
 
 class RNRapidoReach: NSObject {
@@ -56,12 +56,18 @@ class RNRapidoReach: NSObject {
     if(iframeController == nil) {
       return
     }
-    RapidoReach.shared.presentSurvey(iframeController!)
+    DispatchQueue.main.async {
+      RapidoReach.shared.presentSurvey(iframeController!)
+    }
   }
   
 }
 
 extension RNRapidoReach: RapidoReachDelegate {
+  func didSurveyAvailable(_ available: Bool) {
+        
+  }
+
   func didFinishSurvey() {
     
   }
