@@ -4,7 +4,7 @@
 
 ### Get your API key
 
-Sign-up for a new developer account and create a new app [here](https://rapidoreach.com/developer/apps) and copy your API Key.
+Sign-up for a new developer account and create a new app [here](https://www.rapidoreach.com/) and copy your API Key.
 
 ## Getting started
 
@@ -122,7 +122,7 @@ this.rapidoreachSurveyAvailableListener = RapidoReachEventEmitter.addListener(
 Implement the callback:
 ```javascript
 rapidoreachSurveyAvailable = (surveyAvailable) => {
-  if (surveyAvailable == 1) {
+  if (surveyAvailable == "true") {
     console.log('rapidoreach survey is available');
   } else {
     console.log('rapidoreach survey is NOT available');
@@ -158,4 +158,25 @@ We have thousands of surveys and add hundreds more every day. Most users will ha
 ##### I'm ready to go live! What are the next steps?
 
 Let us know! We'd love to help ensure everything flows smoothly and help you achieve your monetisation goals!
+
+
+## Following the rewarded and/or theOfferwall approach
+
+An example is provided on [Github](https://github.com/rapidoreach/ReactNativeSDK) that demonstrates how a publisher can implement the rewarded and/or the Offerwall approach. Upon survey completion, the publisher can reward the user.
+
+
+## Limitations / Minimum Requirements
+
+This is just an initial version of the plugin. There are still some
+limitations:
+
+- You cannot pass custom attributes during initialization
+- No tests implemented yet
+- Minimum iOS is 9.0 and minimum Android version is 16
+
+For other RapidoReach products, see
+[RapidoReach docs](https://www.rapidoreach.com/docs).
+
 # ReactNativeSDK
+
+
