@@ -1,28 +1,27 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text, Button } from 'react-native';
-import RapidoReach, { RapidoReachEventEmitter } from 'react-native-rapidoreach';
-// import RapidoReach from '@rapidoreachsdk/react-native-rapidoreach';
+// import RapidoReach, { RapidoReachEventEmitter } from 'react-native-rapidoreach';
+import RapidoReach from '@rapidoreachsdk/react-native-rapidoreach';
 // import { RapidoReachEventEmitter } from '@rapidoreachsdk/react-native-rapidoreach';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
-
   React.useEffect(() => {
-    console.log("eeee")
     RapidoReach.initWithApiKeyAndUserId(
       'd5ece53df8ac97409298325fec81f3f7',
       'ANDROID_TEST_ID'
     );
+    RapidoReach.setNavBarColor('#211056');
+    RapidoReach.setNavBarText('#211548');
+    RapidoReach.setNavBarTextColor('#FFFFFF');
   }, []);
 
-  function onPressShowRewardCenter(){
-    console.log("I am in reward center")
+  function onPressShowRewardCenter() {
     // RapidoReach.isSurveyAvailable((isAvailable) => {
-      // if a survey is available, show the reward center
-      // if (isAvailable) {
-        RapidoReach.showRewardCenter();
-      // }
+    // if a survey is available, show the reward center
+    // if (isAvailable) {
+    RapidoReach.showRewardCenter();
+    // }
     // })
   }
 

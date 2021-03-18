@@ -2,6 +2,10 @@ import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 type RapidoreachType = {
   initWithApiKeyAndUserId(a: string, b: string): any;
+  setNavBarColor(a: string): any;
+  setNavBarTextColor(a: string): any;
+  setNavBarText(a: string): any;
+  showRewardCenter(): any;
 };
 
 // const { Rapidoreach } = NativeModules;

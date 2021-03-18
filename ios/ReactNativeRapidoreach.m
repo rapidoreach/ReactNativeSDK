@@ -6,6 +6,10 @@
 
 RCT_EXTERN_METHOD(initWithApiKeyAndUserId:(NSString *)apiKey userId:(NSString *)userId)
 RCT_EXTERN_METHOD(showRewardCenter)
+RCT_EXTERN_METHOD(setNavBarColor:(NSString *)barColor)
+RCT_EXTERN_METHOD(setNavBarText:(NSString *)text)
+RCT_EXTERN_METHOD(setNavBarTextColor:(NSString *)textColor)
+
 
 @end
 

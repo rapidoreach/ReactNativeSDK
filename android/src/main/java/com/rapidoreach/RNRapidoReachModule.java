@@ -47,6 +47,23 @@ public class RNRapidoReachModule extends ReactContextBaseJavaModule
     }
 
     @ReactMethod
+    public void setNavBarColor(String barColor) {
+      RapidoReach.getInstance().setNavigationBarColor(barColor);
+    }
+
+    @ReactMethod
+    public void setNavBarText(String text) {
+      RapidoReach.getInstance().setNavigationBarText(text);
+    }
+
+    @ReactMethod
+    public void setNavBarTextColor(String textColor) {
+      RapidoReach.getInstance().setNavigationBarTextColor(textColor);
+    }
+
+
+
+  @ReactMethod
     public void showRewardCenter() {
         RapidoReach.getInstance().showRewardCenter();
     }

@@ -140,6 +140,17 @@ componentWillUnmount() {
 }
 ```
 
+
+### Customizing SDK options
+
+We provide several methods to customize the navigation bar to feel like your app.
+
+```
+    RapidoReach.setNavBarColor('#211056');
+    RapidoReach.setNavBarText('#211548');
+    RapidoReach.setNavBarTextColor('#FFFFFF');
+```
+
 ## Contact
 Please send all questions, concerns, or bug reports to admin@rapidoreach.com.
 

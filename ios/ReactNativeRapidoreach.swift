@@ -24,7 +24,7 @@ class RNRapidoReach: NSObject {
     RapidoReach.shared.setsurveysAvailableCallback { (available:Bool) in
       print("Rapido Reach Survey Available" );
 //      RNRapidoReach.EventEmitter.sendEvent(withName: "onRewardCenterClosed", body: nil)
-      RapidoReachEventEmitter.shared?.rapidoreachSurveyAvailable(available)
+        RapidoReachEventEmitter.shared?.rapidoreachSurveyAvailable(available: available)
     }
     RapidoReach.shared.setrewardCenterOpenedCallback {
       print("Reward centre opened")
@@ -41,6 +41,19 @@ class RNRapidoReach: NSObject {
     RapidoReach.shared.fetchAppUserID()
       //    return true
   }
+    
+    @objc
+    func setNavBarColor(_ barColor:NSString) -> Void {
+        RapidoReach.shared.setNavigationBarColor(for: barColor as String)
+    }
+    @objc
+    func setNavBarText(_ text:NSString) -> Void {
+        RapidoReach.shared.setNavigationBarText(for: text as String)
+    }
+    @objc
+    func setNavBarTextColor(_ textColor:NSString) -> Void {
+        RapidoReach.shared.setNavigationBarTextColor(for: textColor as String)
+    }
 
   func topMostController() -> UIViewController? {
       guard let window = UIApplication.shared.keyWindow, let rootViewController = window.rootViewController else {
@@ -134,7 +147,7 @@ class RapidoReachEventEmitter: RCTEventEmitter {
       @objc
       func rapidoreachSurveyAvailable(available: Bool)  {
           print("Native test  rapidoreachSurveyAvailable");
-         sendEvent(withName: "rapidoreachSurveyAvailable", body: available? "true" : "false")
+         sendEvent(withName: "rapidoreachSurveyAvailable", body: available ? "true" : "false")
       }
     
     
