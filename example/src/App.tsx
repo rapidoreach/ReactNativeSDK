@@ -12,7 +12,7 @@ export default function App() {
       'ANDROID_TEST_ID'
     );
     RapidoReach.setNavBarColor('#211056');
-    RapidoReach.setNavBarText('#211548');
+    RapidoReach.setNavBarText('RapidoReach');
     RapidoReach.setNavBarTextColor('#FFFFFF');
   }, []);
 
