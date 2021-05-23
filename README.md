@@ -10,8 +10,6 @@ Sign-up for a new developer account and create a new app [here](https://www.rapi
 
 `$ npm install @rapidoreachsdk/react-native-rapidoreach`
 
-`$ yarn add react-native-webview`
-
 `$ cd ios && pod install && cd ..` # CocoaPods on iOS needs this extra step
 
 We are all set up! Now let's use the module.
