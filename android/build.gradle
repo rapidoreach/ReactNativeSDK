@@ -29,11 +29,12 @@ android {
 repositories {
     google()
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     implementation 'com.facebook.react:react-native:+'
     implementation 'com.google.android.gms:play-services-ads:15.0.0'
-    implementation files('libs/RapidoReach-1.0.0.aar')
+    implementation 'com.github.vikash766:cbofferwallsdk:1.0.4'
     implementation 'androidx.annotation:annotation:1.1.0'
 }

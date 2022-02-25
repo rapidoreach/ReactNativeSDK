@@ -1,6 +1,6 @@
 {
   "name": "@rapidoreachsdk/react-native-rapidoreach",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "surveys",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
