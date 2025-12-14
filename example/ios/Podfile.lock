@@ -8,9 +8,9 @@ PODS:
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
-  - RapidoReach (1.0.7)
+  - RapidoReach (1.0.8)
   - rapidoreachsdk-react-native-rapidoreach (1.1.0):
-    - RapidoReach (= 1.0.7)
+    - RapidoReach (= 1.0.8)
     - React-Core
   - RCT-Folly (2024.11.18.00):
     - boost

@@ -17,13 +17,13 @@ end
 target 'ReactNativeRapidoreachExample' do
   config = use_native_modules!
 
-  # Temporary fallback for RapidoReach 1.0.7 while CocoaPods trunk/CDN propagation completes.
-  # If a local checkout exists at `../../../cbiossdk`, prefer that; otherwise use git tag `1.0.7`.
+  # Temporary fallback for RapidoReach 1.0.8 while CocoaPods trunk/CDN propagation completes.
+  # If a local checkout exists at `../../../cbiossdk`, prefer that; otherwise use git tag `1.0.8`.
   rapido_reach_local = File.expand_path("../../../cbiossdk", __dir__)
   if File.exist?(File.join(rapido_reach_local, "RapidoReach.podspec"))
     pod "RapidoReach", :path => rapido_reach_local
   else
-    pod "RapidoReach", :git => "https://github.com/rapidoreach/cbiossdk.git", :tag => "1.0.7"
+    pod "RapidoReach", :git => "https://github.com/rapidoreach/cbiossdk.git", :tag => "1.0.8"
   end
 
   use_react_native!(

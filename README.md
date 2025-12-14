@@ -1,5 +1,7 @@
 # @rapidoreachsdk/react-native-rapidoreach
 
+Latest release: `1.0.8` (includes improved error guards, safer listeners, and the bundled AAR).
+
 ## Before you start
 
 ### Get your API key
@@ -17,13 +19,15 @@ Then install iOS pods:
 `cd ios && pod install && cd ..`
 
 Notes:
-- Android: this wrapper bundles RapidoReach Android SDK `1.0.2` (minSdk 23).
-- iOS: this wrapper depends on the CocoaPods SDK `RapidoReach 1.0.7`.
+- Android: this wrapper bundles `android/libs/RapidoReach-1.0.2.aar` so you don't need an external Maven repo.
+- iOS: this wrapper depends on the CocoaPods SDK `RapidoReach 1.0.8`.
 - React Native: tested with React 19 / React Native 0.83.x.
+
+The packaged AAR is already part of this project, so you can build/publish your React Native app without any GitHub Packages or Maven credentials.
 
 ### Troubleshooting installs
 
-- iOS CocoaPods: if you see `None of your spec sources contain a spec satisfying the dependency: RapidoReach (= 1.0.7)`, run `pod repo update` then `pod install` again.
+- iOS CocoaPods: if you see `None of your spec sources contain a spec satisfying the dependency: RapidoReach (= 1.0.8)`, run `pod repo update` then `pod install` again.
 - Android build “Cannot run program node”: make sure Node.js is installed. You can also set `NODE_BINARY=/absolute/path/to/node`.
 
 ## Usage
@@ -41,28 +45,6 @@ Initialize once (typically on app start or after login). Always `await` it befor
 ```javascript
 async function init() {
   await RapidoReach.initWithApiKeyAndUserId('YOUR_API_TOKEN', 'YOUR_USER_ID');
-}
-```
-
-### Error handling
-
-Most APIs return Promises and will reject with a structured error (typically a `code` + `message`). Wrap calls in `try/catch`, especially during integration.
-
-Common error codes:
-- `not_initialized`: call and await `initWithApiKeyAndUserId` first
-- `no_activity` (Android): call from a foreground screen (Activity available)
-- `no_presenter` (iOS): no active view controller available to present UI
-- `not_linked`: native module not installed/linked (run pods/gradle rebuild)
-
-For non-Promise APIs (like `showRewardCenter()`), the native layer also emits an `onError` event via `RapidoReachEventEmitter` with `{ code, message }`.
-
-Example:
-
-```js
-try {
-  await RapidoReach.sendUserAttributes({ country: 'US' });
-} catch (e) {
-  console.warn('RapidoReach error:', e);
 }
 ```
 
@@ -194,12 +176,18 @@ Remember to remove listeners when your screen unmounts.
 
 ### Customizing SDK options
 
-We provide several methods to customize the navigation bar to feel like your app.
+We provide several methods to customize the navigation bar to feel like your app:
 
 ```
     RapidoReach.setNavBarColor('#211056');
     RapidoReach.setNavBarText('Rewards');
     RapidoReach.setNavBarTextColor('#FFFFFF');
+```
+
+If your user logs in/out, update the user identifier (after init):
+
+```js
+await RapidoReach.setUserIdentifier('NEW_USER_ID');
 ```
 
 ### Additional APIs
@@ -230,6 +218,18 @@ if (!firstSurveyId) return;
 await RapidoReach.showSurvey(tag, firstSurveyId, { source: 'my_screen' });
 ```
 
+### Quick Questions
+
+```js
+const tag = 'default';
+const payload = await RapidoReach.fetchQuickQuestions(tag);
+const has = await RapidoReach.hasQuickQuestions(tag);
+
+if (has) {
+  await RapidoReach.answerQuickQuestion(tag, 'QUESTION_ID', 'yes');
+}
+```
+
 ### Network logging (debug)
 
 To stream full SDK network calls (including base URL) into JS, enable logging and subscribe to `rapidoreachNetworkLog`:
@@ -257,8 +257,31 @@ await RapidoReach.sendUserAttributes(
 );
 ```
 
+
+### Error handling (optional)
+
+Most APIs return Promises and will reject with a structured error (typically a `code` + `message`). Wrap calls in `try/catch`, especially during integration.
+
+Common error codes:
+- `not_initialized`: call and await `initWithApiKeyAndUserId` first
+- `no_activity` (Android): call from a foreground screen (Activity available)
+- `no_presenter` (iOS): no active view controller available to present UI
+- `not_linked`: native module not installed/linked (run pods/gradle rebuild)
+
+For non-Promise APIs (like `showRewardCenter()`), the native layer also emits an `onError` event via `RapidoReachEventEmitter` with `{ code, message }`.
+
+Example:
+
+```js
+try {
+  await RapidoReach.sendUserAttributes({ country: 'US' });
+} catch (e) {
+  console.warn('RapidoReach error:', e);
+}
+```
+
 ## Contact
-Please send all questions, concerns, or bug reports to admin@rapidoreach.com.
+Please send all questions, concerns, or bug reports to developers@rapidoreach.com.
 
 ## FAQ
 ##### What do you do to protect privacy?
@@ -291,6 +314,6 @@ limitations:
 - Minimum iOS is 15.1 (React Native 0.83 requirement) and minimum Android version is 23 (native SDK requirement; RN template minSdk is 24)
 
 For other RapidoReach products, see
-[RapidoReach docs](https://www.rapidoreach.com/docs).
+[RapidoReach docs](https://docs.rapidoreach.com).
 
 # ReactNativeSDK

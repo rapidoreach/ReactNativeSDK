@@ -16,10 +16,16 @@
     "rapidoreachsdk-react-native-rapidoreach.podspec",
     "!lib/typescript/example",
     "!android/build",
+    "!android/.gradle",
+    "!android/.idea",
+    "!android/*.iml",
+    "!android/local.properties",
     "!ios/build",
+    "!ios/**/xcuserdata",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "!**/.DS_Store"
   ],
   "scripts": {
     "test": "jest",
