@@ -1,30 +1,50 @@
 # @rapidoreachsdk/react-native-rapidoreach
 
+Latest release: `1.0.8` (includes improved error guards, safer listeners, and the bundled AAR).
+
 ## Before you start
 
 ### Get your API key
 
-Sign-up for a new developer account and create a new app [here](https://www.rapidoreach.com/) and copy your API Key.
+Sign up for a developer account and create a new app on the RapidoReach dashboard, then copy your API Key.
 
 ## Getting started
 
-`$ npm install @rapidoreachsdk/react-native-rapidoreach`
+Install the package:
 
-`$ cd ios && pod install && cd ..` # CocoaPods on iOS needs this extra step
+`npm install @rapidoreachsdk/react-native-rapidoreach`
 
-We are all set up! Now let's use the module.
+Then install iOS pods:
+
+`cd ios && pod install && cd ..`
+
+Notes:
+- Android: this wrapper bundles `android/libs/RapidoReach-1.0.2.aar` so you don't need an external Maven repo.
+- iOS: this wrapper depends on the CocoaPods SDK `RapidoReach 1.0.8`.
+- React Native: tested with React 19 / React Native 0.83.x.
+
+The packaged AAR is already part of this project, so you can build/publish your React Native app without any GitHub Packages or Maven credentials.
+
+### Troubleshooting installs
+
+- iOS CocoaPods: if you see `None of your spec sources contain a spec satisfying the dependency: RapidoReach (= 1.0.8)`, run `pod repo update` then `pod install` again.
+- Android build “Cannot run program node”: make sure Node.js is installed. You can also set `NODE_BINARY=/absolute/path/to/node`.
 
 ## Usage
 
-### Initialize RapidoReach
-First, you need to initialize the RapidoReach instance with `initWithApiKeyAndUserId` call.
-```javascript
-// Import RapidoReach native module
-import RapidoReach from '@rapidoreachsdk/react-native-rapidoreach';
+### Import
 
-componentDidMount() {
-  // In your app initialization, initialize RapidoReach
-  RapidoReach.initWithApiKeyAndUserId('YOUR_API_TOKEN', 'YOUR_USER_ID');
+```js
+import RapidoReach, { RapidoReachEventEmitter } from '@rapidoreachsdk/react-native-rapidoreach';
+```
+
+### Initialize RapidoReach
+
+Initialize once (typically on app start or after login). Always `await` it before calling other APIs.
+
+```javascript
+async function init() {
+  await RapidoReach.initWithApiKeyAndUserId('YOUR_API_TOKEN', 'YOUR_USER_ID');
 }
 ```
 
@@ -41,6 +61,8 @@ onPressShowRewardCenter = () => {
   })
 }
 ```
+
+Tip: for more control and better UX, prefer placement-based checks using `await RapidoReach.canShowContent(tag)` and `await RapidoReach.listSurveys(tag)` (see below).
 
 ### Reward Callback
 
@@ -120,7 +142,7 @@ this.rapidoreachSurveyAvailableListener = RapidoReachEventEmitter.addListener(
 Implement the callback:
 ```javascript
 rapidoreachSurveyAvailable = (surveyAvailable) => {
-  if (surveyAvailable == "true") {
+  if (surveyAvailable) {
     console.log('rapidoreach survey is available');
   } else {
     console.log('rapidoreach survey is NOT available');
@@ -138,19 +160,128 @@ componentWillUnmount() {
 }
 ```
 
+#### Error events
+
+Subscribe to `onError` to surface integration/runtime issues (recommended in debug builds):
+
+```js
+const sub = RapidoReachEventEmitter.addListener('onError', (payload) => {
+  // payload: { code: string, message: string }
+  console.warn('RapidoReach onError:', payload);
+});
+```
+
+Remember to remove listeners when your screen unmounts.
+
 
 ### Customizing SDK options
 
-We provide several methods to customize the navigation bar to feel like your app.
+We provide several methods to customize the navigation bar to feel like your app:
 
 ```
     RapidoReach.setNavBarColor('#211056');
-    RapidoReach.setNavBarText('#211548');
+    RapidoReach.setNavBarText('Rewards');
     RapidoReach.setNavBarTextColor('#FFFFFF');
 ```
 
+If your user logs in/out, update the user identifier (after init):
+
+```js
+await RapidoReach.setUserIdentifier('NEW_USER_ID');
+```
+
+### Additional APIs
+
+The wrapper now exposes the newer native SDK capabilities:
+
+- `updateBackend(baseURL, rewardHashSalt?)` (staging/regional backends)
+- `sendUserAttributes(attributes, clearPrevious?)`
+- `setUserIdentifier(userId)`
+- Placement helpers: `getPlacementDetails(tag)`, `listSurveys(tag)`, `hasSurveys(tag)`, `canShowSurvey(tag, surveyId)`, `canShowContent(tag)`, `showSurvey(tag, surveyId, customParams?)`
+- Quick Questions: `fetchQuickQuestions(tag)`, `hasQuickQuestions(tag)`, `answerQuickQuestion(tag, questionId, answer)`
+- Debug helpers: `getBaseUrl()`, `enableNetworkLogging(enabled)`
+
+### Placement-based flows (recommended)
+
+If you use multiple placements (or want a more guided UX than a single “reward center” button), you can query placement state, list surveys, and open a specific survey.
+
+```js
+const tag = 'default';
+
+const canShow = await RapidoReach.canShowContent(tag);
+if (!canShow) return;
+
+const surveys = await RapidoReach.listSurveys(tag);
+const firstSurveyId = surveys?.[0]?.surveyIdentifier;
+if (!firstSurveyId) return;
+
+await RapidoReach.showSurvey(tag, firstSurveyId, { source: 'my_screen' });
+```
+
+### Quick Questions
+
+```js
+const tag = 'default';
+const payload = await RapidoReach.fetchQuickQuestions(tag);
+const has = await RapidoReach.hasQuickQuestions(tag);
+
+if (has) {
+  await RapidoReach.answerQuickQuestion(tag, 'QUESTION_ID', 'yes');
+}
+```
+
+### Network logging (debug)
+
+To stream full SDK network calls (including base URL) into JS, enable logging and subscribe to `rapidoreachNetworkLog`:
+
+```js
+import RapidoReach, { RapidoReachEventEmitter } from '@rapidoreachsdk/react-native-rapidoreach';
+
+RapidoReach.enableNetworkLogging(true);
+
+const sub = RapidoReachEventEmitter.addListener('rapidoreachNetworkLog', (entry) => {
+  console.log(entry); // { name, method, url, requestBody?, responseBody?, error?, timestampMs }
+});
+```
+
+You can also read the current backend base URL via `await RapidoReach.getBaseUrl()`.
+
+### User attributes
+
+Use attributes to improve targeting and eligibility (only send non-sensitive values you have consent for):
+
+```js
+await RapidoReach.sendUserAttributes(
+  { country: 'US', age: 25, premium: true },
+  false // clearPrevious
+);
+```
+
+
+### Error handling (optional)
+
+Most APIs return Promises and will reject with a structured error (typically a `code` + `message`). Wrap calls in `try/catch`, especially during integration.
+
+Common error codes:
+- `not_initialized`: call and await `initWithApiKeyAndUserId` first
+- `no_activity` (Android): call from a foreground screen (Activity available)
+- `no_presenter` (iOS): no active view controller available to present UI
+- `not_linked`: native module not installed/linked (run pods/gradle rebuild)
+
+For non-Promise APIs (like `showRewardCenter()`), the native layer also emits an `onError` event via `RapidoReachEventEmitter` with `{ code, message }`.
+
+Example:
+
+```js
+try {
+  await RapidoReach.sendUserAttributes({ country: 'US' });
+} catch (e) {
+  console.warn('RapidoReach error:', e);
+}
+```
+
 ## Contact
-Please send all questions, concerns, or bug reports to admin@rapidoreach.com.
+Please send all questions, concerns, or bug reports to developers@rapidoreach.com.
 
 ## FAQ
 ##### What do you do to protect privacy?
@@ -179,13 +310,10 @@ An example is provided on [Github](https://github.com/rapidoreach/ReactNativeSDK
 This is just an initial version of the plugin. There are still some
 limitations:
 
-- You cannot pass custom attributes during initialization
-- No tests implemented yet
-- Minimum iOS is 9.0 and minimum Android version is 16
+- Some UI APIs require a visible screen (Android Activity / iOS UIViewController).
+- Minimum iOS is 15.1 (React Native 0.83 requirement) and minimum Android version is 23 (native SDK requirement; RN template minSdk is 24)
 
 For other RapidoReach products, see
-[RapidoReach docs](https://www.rapidoreach.com/docs).
+[RapidoReach docs](https://docs.rapidoreach.com).
 
 # ReactNativeSDK
-
-
