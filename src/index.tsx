@@ -48,6 +48,11 @@ const RapidoReachEventEmitter =
 
 const RapidoReachNative = NativeModuleCandidate as RapidoreachType;
 
+const missingNativeMethodError = (name: string) =>
+  new Error(
+    `RapidoReach native method '${name}' is not linked. Rebuild the app and ensure pods/gradle are installed.`
+  );
+
 const RapidoReach = {
   ...RapidoReachNative,
   initWithApiKeyAndUserId: (apiKey: string, userId: string) => {
@@ -55,9 +60,7 @@ const RapidoReach = {
     if (typeof fn === 'function') {
       return fn(apiKey, userId);
     }
-    throw new Error(
-      'RapidoReach native module is not linked. Run `cd ios && pod install`, rebuild the app, and ensure the pod is installed.'
-    );
+    throw missingNativeMethodError('initWithApiKeyAndUserId');
   },
   isSurveyAvailable: (cb: (isAvailable: boolean) => any) => {
     const fn = (RapidoReachNative as any)?.isSurveyAvailable;
@@ -66,6 +69,21 @@ const RapidoReach = {
       return;
     }
     cb(false);
+  },
+  showRewardCenter: () => {
+    const fn = (RapidoReachNative as any)?.showRewardCenter;
+    if (typeof fn === 'function') {
+      fn();
+      return;
+    }
+    throw missingNativeMethodError('showRewardCenter');
+  },
+  setUserIdentifier: async (userId: string) => {
+    const fn = (RapidoReachNative as any)?.setUserIdentifier;
+    if (typeof fn === 'function') {
+      return await fn(userId);
+    }
+    throw missingNativeMethodError('setUserIdentifier');
   },
   setNavBarColor: (color: string) => {
     const fn = (RapidoReachNative as any)?.setNavBarColor;
@@ -101,14 +119,87 @@ const RapidoReach = {
   sendUserAttributes: (
     attributes: Record<string, any>,
     clearPrevious = false
-  ) => RapidoReachNative.sendUserAttributes(attributes, clearPrevious),
+  ) => {
+    const fn = (RapidoReachNative as any)?.sendUserAttributes;
+    if (typeof fn === 'function') {
+      return fn(attributes, clearPrevious);
+    }
+    return Promise.reject(missingNativeMethodError('sendUserAttributes'));
+  },
   showSurvey: (
     tag: string,
     surveyId: string,
     customParams?: Record<string, any>
-  ) => RapidoReachNative.showSurvey(tag, surveyId, customParams || {}),
-  updateBackend: (baseURL: string, rewardHashSalt?: string) =>
-    RapidoReachNative.updateBackend(baseURL, rewardHashSalt ?? null),
+  ) => {
+    const fn = (RapidoReachNative as any)?.showSurvey;
+    if (typeof fn === 'function') {
+      return fn(tag, surveyId, customParams || {});
+    }
+    return Promise.reject(missingNativeMethodError('showSurvey'));
+  },
+  updateBackend: async (baseURL: string, rewardHashSalt?: string) => {
+    const fn = (RapidoReachNative as any)?.updateBackend;
+    if (typeof fn === 'function') {
+      return await fn(baseURL, rewardHashSalt ?? null);
+    }
+    return Promise.reject(missingNativeMethodError('updateBackend'));
+  },
+  getPlacementDetails: async (tag: string) => {
+    const fn = (RapidoReachNative as any)?.getPlacementDetails;
+    if (typeof fn === 'function') {
+      return await fn(tag);
+    }
+    return {};
+  },
+  listSurveys: async (tag: string) => {
+    const fn = (RapidoReachNative as any)?.listSurveys;
+    if (typeof fn === 'function') {
+      return await fn(tag);
+    }
+    return [];
+  },
+  hasSurveys: async (tag: string) => {
+    const fn = (RapidoReachNative as any)?.hasSurveys;
+    if (typeof fn === 'function') {
+      return await fn(tag);
+    }
+    return false;
+  },
+  canShowSurvey: async (tag: string, surveyId: string) => {
+    const fn = (RapidoReachNative as any)?.canShowSurvey;
+    if (typeof fn === 'function') {
+      return await fn(tag, surveyId);
+    }
+    return false;
+  },
+  canShowContent: async (tag: string) => {
+    const fn = (RapidoReachNative as any)?.canShowContent;
+    if (typeof fn === 'function') {
+      return await fn(tag);
+    }
+    return false;
+  },
+  fetchQuickQuestions: async (tag: string) => {
+    const fn = (RapidoReachNative as any)?.fetchQuickQuestions;
+    if (typeof fn === 'function') {
+      return await fn(tag);
+    }
+    return {};
+  },
+  hasQuickQuestions: async (tag: string) => {
+    const fn = (RapidoReachNative as any)?.hasQuickQuestions;
+    if (typeof fn === 'function') {
+      return await fn(tag);
+    }
+    return false;
+  },
+  answerQuickQuestion: async (tag: string, questionId: string, answer: any) => {
+    const fn = (RapidoReachNative as any)?.answerQuickQuestion;
+    if (typeof fn === 'function') {
+      return await fn(tag, questionId, answer);
+    }
+    return {};
+  },
 };
 
 export default RapidoReach as RapidoreachType;

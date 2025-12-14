@@ -12,7 +12,7 @@ Sign-up for a new developer account and create a new app [here](https://www.rapi
 
 `$ cd ios && pod install && cd ..` # CocoaPods on iOS needs this extra step
 
-> This wrapper bundles RapidoReach Android SDK 1.0.2 (minSdk 23) and iOS SDK 1.0.6 (iOS 15.1+).
+> This wrapper bundles RapidoReach Android SDK 1.0.2 (minSdk 23) and iOS SDK 1.0.7 (iOS 15.1+).
 > React Native tooling has been updated to React 19 / React Native 0.83.x for both the library and the example app.
 
 We are all set up! Now let's use the module.

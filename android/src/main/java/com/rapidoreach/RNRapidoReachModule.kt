@@ -50,9 +50,39 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   override fun getName() = "RNRapidoReach"
 
+  private fun ReadableMap.toNonNullStringAnyMap(): Map<String, Any> {
+    val raw = this.toHashMap()
+    return raw.entries
+      .filter { it.value != null }
+      .associate { it.key to (it.value as Any) }
+  }
+
+  private fun ReadableMap?.toNonNullStringAnyMapOrNull(): Map<String, Any>? =
+    this?.toNonNullStringAnyMap()
+
+  private fun dynamicToAny(value: Dynamic): Any? {
+    return when (value.type) {
+      ReadableType.Null -> null
+      ReadableType.Boolean -> value.asBoolean()
+      ReadableType.Number -> {
+        val number = value.asDouble()
+        if (number % 1.0 == 0.0) number.toInt() else number
+      }
+      ReadableType.String -> value.asString()
+      ReadableType.Map -> {
+        val map = value.asMap() ?: return null
+        map.toHashMap().filterValues { it != null }
+      }
+      ReadableType.Array -> {
+        val array = value.asArray() ?: return null
+        array.toArrayList()
+      }
+    }
+  }
+
   @ReactMethod
   fun initWithApiKeyAndUserId(apiKey: String, userId: String, promise: Promise) {
-    val activity = currentActivity
+    val activity = reactContext.currentActivity
     if (activity == null) {
       promise.reject("no_activity", "Current activity is not available")
       return
@@ -196,14 +226,15 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   @ReactMethod
   fun sendUserAttributes(attributes: ReadableMap, clearPrevious: Boolean, promise: Promise) {
     val url = buildUrl("/api/sdk/v2/user_attributes", includeAuthQuery = false)
+    val safeAttributes = attributes.toNonNullStringAnyMap()
     val requestBody = mutableMapOf<String, Any>(
-      "attributes" to attributes.toHashMap(),
+      "attributes" to safeAttributes,
       "clear_previous" to clearPrevious
     )
     configuredApiKey?.let { requestBody["api_key"] = it }
     configuredUserId?.let { requestBody["sdk_user_id"] = it }
 
-    RapidoReachSdk.sendUserAttributes(attributes.toHashMap(), clearPrevious) { error ->
+    RapidoReachSdk.sendUserAttributes(safeAttributes, clearPrevious) { error ->
       if (error != null) {
         emitNetworkLog(
           name = "sendUserAttributes",
@@ -367,8 +398,9 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   @ReactMethod
   fun showSurvey(tag: String, surveyId: String, customParams: ReadableMap?, promise: Promise) {
     val url = buildUrl("/api/sdk/v2/placements/$tag/surveys/$surveyId/show", includeAuthQuery = false)
+    val safeCustomParams = customParams.toNonNullStringAnyMapOrNull()
     val requestBody = mutableMapOf<String, Any?>(
-      "custom_params" to customParams?.toHashMap()
+      "custom_params" to safeCustomParams
     ).filterValues { it != null }.toMutableMap()
     configuredApiKey?.let { requestBody["api_key"] = it }
     configuredUserId?.let { requestBody["sdk_user_id"] = it }
@@ -384,7 +416,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
     RapidoReachSdk.showSurvey(
       tag,
       surveyId,
-      customParams?.toHashMap(),
+      safeCustomParams,
       { contentEvent ->
         handleContentEvent(contentEvent)
         if (contentEvent.type == RrContentEventType.SHOWN && !resolved) {
@@ -474,15 +506,26 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun answerQuickQuestion(tag: String, questionId: String, answer: Any, promise: Promise) {
+  fun answerQuickQuestion(tag: String, questionId: String, answer: Dynamic, promise: Promise) {
     val url = buildUrl("/api/sdk/v2/placements/$tag/quick_questions/$questionId/answer", includeAuthQuery = false)
+    val answerValue = dynamicToAny(answer)
+    if (answerValue == null) {
+      emitNetworkLog(
+        name = "answerQuickQuestion",
+        method = "POST",
+        url = url,
+        error = "Answer is null"
+      )
+      promise.reject("invalid_answer", "Answer is null")
+      return
+    }
     val requestBody = mutableMapOf<String, Any>(
-      "answer" to answer
+      "answer" to answerValue
     )
     configuredApiKey?.let { requestBody["api_key"] = it }
     configuredUserId?.let { requestBody["sdk_user_id"] = it }
 
-    RapidoReachSdk.answerQuickQuestion(tag, questionId, answer) { result ->
+    RapidoReachSdk.answerQuickQuestion(tag, questionId, answerValue) { result ->
       result.fold(
         onSuccess = { payload ->
           emitNetworkLog(
@@ -520,7 +563,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   override fun onHostResume() {
     if (isInitialized) {
-      val activity = currentActivity
+      val activity = reactContext.currentActivity
       if (activity != null) {
         RapidoReach.getInstance().onResume(activity)
       }
@@ -650,14 +693,14 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
         is Double -> map.putDouble(key, value)
         is Float -> map.putDouble(key, value.toDouble())
         is Map<*, *> -> map.putMap(key, (value as Map<String, Any?>).toWritableMap())
-        is List<*> -> map.putArray(key, value.toWritableArray())
+        is List<*> -> map.putArray(key, value.toWritableArrayAny())
         else -> map.putString(key, value.toString())
       }
     }
     return map
   }
 
-  private fun List<*>.toWritableArray(): WritableArray {
+  private fun List<*>.toWritableArrayAny(): WritableArray {
     val array = WritableNativeArray()
     forEach { value ->
       when (value) {
@@ -668,7 +711,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
         is Double -> array.pushDouble(value)
         is Float -> array.pushDouble(value.toDouble())
         is Map<*, *> -> array.pushMap((value as Map<String, Any?>).toWritableMap())
-        is List<*> -> array.pushArray(value.toWritableArray())
+        is List<*> -> array.pushArray(value.toWritableArrayAny())
         else -> array.pushString(value.toString())
       }
     }

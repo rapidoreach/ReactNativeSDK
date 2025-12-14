@@ -7,6 +7,16 @@ apply plugin: "com.facebook.react"
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    def envNodeBinary = System.getenv("NODE_BINARY")
+    def nodeBinary = (envNodeBinary != null && !envNodeBinary.trim().isEmpty()) ? envNodeBinary : null
+    if (nodeBinary == null) {
+        def candidates = ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"]
+        nodeBinary = candidates.find { new File(it).exists() }
+    }
+    if (nodeBinary != null) {
+        nodeExecutableAndArgs = [nodeBinary]
+    }
+
     /* Folders */
     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
     // root = file("../../")

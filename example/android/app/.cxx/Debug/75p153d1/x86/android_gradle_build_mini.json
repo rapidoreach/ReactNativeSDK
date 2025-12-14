@@ -1,0 +1,43 @@
+{
+  "buildFiles": [
+    "/Users/Vikash/Documents/my/ReactNativeSDK/example/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
+    "/Users/Vikash/Documents/my/ReactNativeSDK/example/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/Vikash/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/Vikash/Documents/my/ReactNativeSDK/example/android/app/.cxx/Debug/75p153d1/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/Vikash/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/Vikash/Documents/my/ReactNativeSDK/example/android/app/.cxx/Debug/75p153d1/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "react_codegen_safeareacontext::@7984cd80db47aa7b952a": {
+      "artifactName": "react_codegen_safeareacontext",
+      "abi": "x86",
+      "output": "/Users/Vikash/Documents/my/ReactNativeSDK/example/android/app/build/intermediates/cxx/Debug/75p153d1/obj/x86/libreact_codegen_safeareacontext.so",
+      "runtimeFiles": [
+        "/Users/Vikash/.gradle/caches/9.0.0/transforms/b85f62a599074afc3b2ec6cfb7884973/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so",
+        "/Users/Vikash/.gradle/caches/9.0.0/transforms/4c26de9c12ae8a9829439ab102c24dd1/transformed/react-android-0.83.0-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/Vikash/.gradle/caches/9.0.0/transforms/4c26de9c12ae8a9829439ab102c24dd1/transformed/react-android-0.83.0-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so"
+      ]
+    },
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "x86",
+      "output": "/Users/Vikash/Documents/my/ReactNativeSDK/example/android/app/build/intermediates/cxx/Debug/75p153d1/obj/x86/libappmodules.so",
+      "runtimeFiles": [
+        "/Users/Vikash/Documents/my/ReactNativeSDK/example/android/app/build/intermediates/cxx/Debug/75p153d1/obj/x86/libreact_codegen_safeareacontext.so",
+        "/Users/Vikash/.gradle/caches/9.0.0/transforms/b85f62a599074afc3b2ec6cfb7884973/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so",
+        "/Users/Vikash/.gradle/caches/9.0.0/transforms/4c26de9c12ae8a9829439ab102c24dd1/transformed/react-android-0.83.0-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/Vikash/.gradle/caches/9.0.0/transforms/4c26de9c12ae8a9829439ab102c24dd1/transformed/react-android-0.83.0-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so"
+      ]
+    }
+  }
+}
