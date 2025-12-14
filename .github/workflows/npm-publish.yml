@@ -11,7 +11,7 @@ on:
     tags:
       - "v*"
     branches:
-      - package-update  
+      - package-update
 
 permissions:
   contents: read
