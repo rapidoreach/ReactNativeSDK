@@ -12,8 +12,13 @@ Sign-up for a new developer account and create a new app [here](https://www.rapi
 
 `$ cd ios && pod install && cd ..` # CocoaPods on iOS needs this extra step
 
-> This wrapper bundles RapidoReach Android SDK 1.0.2 (minSdk 23) and iOS SDK 1.0.7 (iOS 15.1+).
-> React Native tooling has been updated to React 19 / React Native 0.83.x for both the library and the example app.
+> This wrapper bundles RapidoReach Android SDK `1.0.2` (minSdk 23) and depends on the iOS CocoaPods SDK `RapidoReach 1.0.7` (iOS 15.1+).
+> The library and example app support React 19 / React Native 0.83.x.
+
+### Troubleshooting installs
+
+- iOS CocoaPods: if you see `None of your spec sources contain a spec satisfying the dependency: RapidoReach (= 1.0.7)`, run `pod repo update` then `pod install` again.
+- Android build “Cannot run program node”: make sure Node.js is installed. You can also set `NODE_BINARY=/absolute/path/to/node`.
 
 We are all set up! Now let's use the module.
 
@@ -25,9 +30,9 @@ First, you need to initialize the RapidoReach instance with `initWithApiKeyAndUs
 // Import RapidoReach native module
 import RapidoReach from '@rapidoreachsdk/react-native-rapidoreach';
 
-componentDidMount() {
+async function init() {
   // In your app initialization, initialize RapidoReach
-  RapidoReach.initWithApiKeyAndUserId('YOUR_API_TOKEN', 'YOUR_USER_ID');
+  await RapidoReach.initWithApiKeyAndUserId('YOUR_API_TOKEN', 'YOUR_USER_ID');
 }
 ```
 
@@ -148,7 +153,7 @@ We provide several methods to customize the navigation bar to feel like your app
 
 ```
     RapidoReach.setNavBarColor('#211056');
-    RapidoReach.setNavBarText('#211548');
+    RapidoReach.setNavBarText('Rewards');
     RapidoReach.setNavBarTextColor('#FFFFFF');
 ```
 
@@ -159,8 +164,9 @@ The wrapper now exposes the newer native SDK capabilities:
 - `updateBackend(baseURL, rewardHashSalt?)` (staging/regional backends)
 - `sendUserAttributes(attributes, clearPrevious?)`
 - `setUserIdentifier(userId)`
-- Placement helpers: `getPlacementDetails(tag)`, `listSurveys(tag)`, `hasSurveys(tag)`, `canShowSurvey(tag, surveyId)`, `showSurvey(tag, surveyId, customParams?)`
+- Placement helpers: `getPlacementDetails(tag)`, `listSurveys(tag)`, `hasSurveys(tag)`, `canShowSurvey(tag, surveyId)`, `canShowContent(tag)`, `showSurvey(tag, surveyId, customParams?)`
 - Quick Questions: `fetchQuickQuestions(tag)`, `hasQuickQuestions(tag)`, `answerQuickQuestion(tag, questionId, answer)`
+- Debug helpers: `getBaseUrl()`, `enableNetworkLogging(enabled)`
 
 ### Network logging (debug)
 
