@@ -10,11 +10,15 @@ class RNRapidoReach: NSObject {
 
   private var surveyAvailability: Bool = false
   private let errorDomain = "rapidoreach"
+  private var isInitialized: Bool = false
+  private var initInProgress: Bool = false
   private var navBarColorHex: String?
   private var navBarTextColorHex: String?
   private var navBarTitle: String?
   private var configuredApiKey: String?
   private var configuredUserId: String?
+  private var pendingBackendURL: URL?
+  private var pendingRewardHashSalt: String?
   private var networkLoggingEnabled: Bool = false
   private var previousLoggerSink: ((RapidoReachLogLevel, String) -> Void)?
   private var previousLoggerLevel: RapidoReachLogLevel?
@@ -120,6 +124,33 @@ class RNRapidoReach: NSObject {
     navController.navigationBar.scrollEdgeAppearance = appearance
     navController.navigationBar.compactAppearance = appearance
   }
+
+  private func emitOnError(code: String, message: String) {
+    DispatchQueue.main.async {
+      RapidoReachEventEmitter.shared?.onError(code: code, message: message)
+    }
+  }
+
+  private func rejectNotInitialized(
+    _ reject: @escaping RCTPromiseRejectBlock,
+    method: String
+  ) {
+    reject(
+      "not_initialized",
+      "RapidoReach not initialized. Call RapidoReach.initWithApiKeyAndUserId(apiKey, userId) and await it before calling `\(method)`.",
+      nil
+    )
+  }
+
+  private func requireInitialized(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock,
+    method: String
+  ) -> Bool {
+    if isInitialized { return true }
+    rejectNotInitialized(reject, method: method)
+    return false
+  }
   
   static func moduleName() -> String!{
     return "RNRapidoReach";
@@ -167,10 +198,49 @@ class RNRapidoReach: NSObject {
   }
 
   @objc
-  func initWithApiKeyAndUserId(_ apiKey:NSString, userId:NSString) -> Void {
-      // Override point for customization after application launch.
-    configuredApiKey = apiKey as String
-    configuredUserId = userId as String
+  func initWithApiKeyAndUserId(
+    _ apiKey: NSString,
+    userId: NSString,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) -> Void {
+    let safeApiKey = (apiKey as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    let safeUserId = (userId as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    if safeApiKey.isEmpty {
+      reject("invalid_args", "apiKey is required", nil)
+      return
+    }
+    if safeUserId.isEmpty {
+      reject("invalid_args", "userId is required", nil)
+      return
+    }
+
+    if initInProgress {
+      reject("init_in_progress", "RapidoReach initialization is already in progress.", nil)
+      return
+    }
+
+    if isInitialized {
+      if let configuredApiKey, configuredApiKey != safeApiKey {
+        reject(
+          "already_initialized",
+          "RapidoReach is already initialized with a different apiKey. Restart the app to reinitialize.",
+          nil
+        )
+        return
+      }
+      configuredApiKey = safeApiKey
+      if configuredUserId != safeUserId {
+        configuredUserId = safeUserId
+        RapidoReach.shared.setUserIdentifier(safeUserId)
+      }
+      resolve(nil)
+      return
+    }
+
+    initInProgress = true
+    configuredApiKey = safeApiKey
+    configuredUserId = safeUserId
 
     RapidoReach.shared.setRewardCallback { (reward:Int) in
       print("%d REWARD", reward);
@@ -193,29 +263,66 @@ class RNRapidoReach: NSObject {
 
 
     }
-    RapidoReach.shared.configure(apiKey: apiKey as String, user: userId as String)
-    RapidoReach.shared.fetchAppUserID()
-      //    return true
+
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      RapidoReach.shared.configure(apiKey: safeApiKey, user: safeUserId)
+
+      if let navBarTitle = self.navBarTitle {
+        RapidoReach.shared.setNavigationBarText(for: navBarTitle)
+      }
+      if let navBarColorHex = self.navBarColorHex {
+        RapidoReach.shared.setNavigationBarColor(for: navBarColorHex)
+      }
+      if let navBarTextColorHex = self.navBarTextColorHex {
+        RapidoReach.shared.setNavigationBarTextColor(for: navBarTextColorHex)
+      }
+
+      if let pendingBackendURL = self.pendingBackendURL {
+        RapidoReach.shared.updateBackend(baseURL: pendingBackendURL, rewardHashSalt: self.pendingRewardHashSalt)
+      }
+
+      RapidoReach.shared.fetchAppUserID()
+      self.isInitialized = true
+      self.initInProgress = false
+      self.emitNetworkLog(name: "initialize", method: "INIT", url: nil, responseBody: ["status": "initialized"])
+      resolve(nil)
+    }
   }
 
   @objc
   func setUserIdentifier(_ userId: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-    configuredUserId = userId as String
-    RapidoReach.shared.setUserIdentifier(userId as String)
+    guard requireInitialized(resolve, rejecter: reject, method: "setUserIdentifier") else { return }
+    let safeUserId = (userId as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    if safeUserId.isEmpty {
+      reject("invalid_args", "userId is required", nil)
+      return
+    }
+    configuredUserId = safeUserId
+    RapidoReach.shared.setUserIdentifier(safeUserId)
     resolve(nil)
   }
     
     @objc
     func setNavBarColor(_ barColor:NSString) -> Void {
         navBarColorHex = barColor as String
+        if isInitialized {
+          RapidoReach.shared.setNavigationBarColor(for: navBarColorHex ?? "")
+        }
     }
     @objc
     func setNavBarText(_ text:NSString) -> Void {
         navBarTitle = text as String
+        if isInitialized {
+          RapidoReach.shared.setNavigationBarText(for: navBarTitle ?? "")
+        }
     }
     @objc
     func setNavBarTextColor(_ textColor:NSString) -> Void {
         navBarTextColorHex = textColor as String
+        if isInitialized {
+          RapidoReach.shared.setNavigationBarTextColor(for: navBarTextColorHex ?? "")
+        }
     }
 
   func topMostController(root: UIViewController? = nil) -> UIViewController? {
@@ -234,11 +341,16 @@ class RNRapidoReach: NSObject {
 
   @objc
   func updateBackend(_ baseURL: NSString, rewardHashSalt: NSString?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-    guard let url = URL(string: baseURL as String) else {
-      reject(self.errorDomain, "Invalid baseURL", nil)
+    let safeBaseUrl = (baseURL as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let url = URL(string: safeBaseUrl) else {
+      reject("invalid_args", "Invalid baseURL", nil)
       return
     }
-    RapidoReach.shared.updateBackend(baseURL: url, rewardHashSalt: rewardHashSalt as String?)
+    pendingBackendURL = url
+    pendingRewardHashSalt = rewardHashSalt as String?
+    if isInitialized {
+      RapidoReach.shared.updateBackend(baseURL: url, rewardHashSalt: rewardHashSalt as String?)
+    }
     emitNetworkLog(
       name: "updateBackend",
       method: "CONFIG",
@@ -248,8 +360,13 @@ class RNRapidoReach: NSObject {
   }
   @objc
   func showRewardCenter() -> Void {
+    guard isInitialized else {
+      emitOnError(code: "not_initialized", message: "Call initWithApiKeyAndUserId(apiKey, userId) before showRewardCenter().")
+      return
+    }
     let iframeController = topMostController()
     if(iframeController == nil) {
+      emitOnError(code: "no_presenter", message: "Unable to present survey UI because no active UIViewController was found.")
       return
     }
     DispatchQueue.main.async {
@@ -265,11 +382,17 @@ class RNRapidoReach: NSObject {
 
   @objc
   func isSurveyAvailable(_ callback: RCTResponseSenderBlock) -> Void {
+    if !isInitialized {
+      emitOnError(code: "not_initialized", message: "Call initWithApiKeyAndUserId(apiKey, userId) before isSurveyAvailable().")
+      callback([false])
+      return
+    }
     callback([surveyAvailability])
   }
 
   @objc
   func sendUserAttributes(_ attributes: NSDictionary, clearPrevious: Bool = false, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "sendUserAttributes") else { return }
     let url = buildUrl(path: "/api/sdk/v2/user_attributes")
     var requestPayload = authBodyFields()
     requestPayload["attributes"] = attributes
@@ -283,7 +406,7 @@ class RNRapidoReach: NSObject {
           requestBody: requestPayload,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("send_user_attributes_error", error.localizedDescription, error)
       } else {
         self.emitNetworkLog(
           name: "sendUserAttributes",
@@ -299,6 +422,7 @@ class RNRapidoReach: NSObject {
 
   @objc
   func getPlacementDetails(_ tag: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "getPlacementDetails") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/details",
       queryItems: authQueryItems()
@@ -320,13 +444,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("placement_details_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func listSurveys(_ tag: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "listSurveys") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/surveys",
       queryItems: authQueryItems()
@@ -348,13 +473,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("list_surveys_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func hasSurveys(_ tag: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "hasSurveys") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/surveys",
       queryItems: authQueryItems()
@@ -376,13 +502,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("has_surveys_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func canShowSurvey(_ tag: NSString, surveyId: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "canShowSurvey") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/surveys/\(surveyId)/can_show",
       queryItems: authQueryItems()
@@ -404,13 +531,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("can_show_survey_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func canShowContent(_ tag: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "canShowContent") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/can_show",
       queryItems: authQueryItems()
@@ -432,13 +560,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("can_show_content_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func showSurvey(_ tag: NSString, surveyId: NSString, customParams: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "showSurvey") else { return }
     let requestUrl = buildUrl(path: "/api/sdk/v2/placements/\(tag)/surveys/\(surveyId)/show")
     var requestPayload = authBodyFields()
     if let customParams {
@@ -455,7 +584,7 @@ class RNRapidoReach: NSObject {
           responseBody: ["surveyEntryUrl": url.absoluteString]
         )
         guard let presenter = self?.topMostController() else {
-          resolve(nil)
+          reject("no_presenter", "Unable to present survey UI because no active UIViewController was found.", nil)
           return
         }
         DispatchQueue.main.async {
@@ -472,14 +601,14 @@ class RNRapidoReach: NSObject {
           requestBody: requestPayload,
           error: error
         )
-        let domain = self?.errorDomain ?? "rapidoreach"
-        reject(domain, error.localizedDescription, error)
+        reject("show_survey_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func fetchQuickQuestions(_ tag: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "fetchQuickQuestions") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/quick_questions",
       queryItems: authQueryItems()
@@ -501,13 +630,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("fetch_quick_questions_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func hasQuickQuestions(_ tag: NSString, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "hasQuickQuestions") else { return }
     let url = buildUrl(
       path: "/api/sdk/v2/placements/\(tag)/quick_questions",
       queryItems: authQueryItems()
@@ -529,13 +659,14 @@ class RNRapidoReach: NSObject {
           url: url,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("has_quick_questions_error", error.localizedDescription, error)
       }
     }
   }
 
   @objc
   func answerQuickQuestion(_ tag: NSString, questionId: NSString, answer: Any, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard requireInitialized(resolve, rejecter: reject, method: "answerQuickQuestion") else { return }
     let url = buildUrl(path: "/api/sdk/v2/placements/\(tag)/quick_questions/\(questionId)/answer")
     var requestPayload = authBodyFields()
     requestPayload["answer"] = answer
@@ -558,7 +689,7 @@ class RNRapidoReach: NSObject {
           requestBody: requestPayload,
           error: error
         )
-        reject(self.errorDomain, error.localizedDescription, error)
+        reject("answer_quick_question_error", error.localizedDescription, error)
       }
     }
   }
@@ -637,6 +768,11 @@ class RapidoReachEventEmitter: RCTEventEmitter {
       @objc
       func rapidoreachNetworkLog(_ payload: NSDictionary) {
         sendEvent(withName: "rapidoreachNetworkLog", body: payload)
+      }
+
+      @objc
+      func onError(code: String, message: String) {
+        sendEvent(withName: "onError", body: ["code": code, "message": message])
       }
     
     

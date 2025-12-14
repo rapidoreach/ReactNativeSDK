@@ -36,6 +36,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
 
   private var isInitialized = false
+  private var initInProgress = false
   private var surveyAvailable = false
   private var navBarColor: String? = null
   private var navBarTextColor: String? = null
@@ -43,12 +44,38 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   private var networkLoggingEnabled = false
   private var configuredApiKey: String? = null
   private var configuredUserId: String? = null
+  private var apiEndpoint: String? = null
 
   init {
     reactContext.addLifecycleEventListener(this)
   }
 
   override fun getName() = "RNRapidoReach"
+
+  private fun requireInitialized(promise: Promise?, method: String): Boolean {
+    if (isInitialized) return true
+    val message =
+      "RapidoReach not initialized. Call RapidoReach.initWithApiKeyAndUserId(apiKey, userId) and await it before calling `$method`."
+    if (promise != null) {
+      promise.reject("not_initialized", message)
+    } else {
+      sendEvent("onError", message)
+    }
+    return false
+  }
+
+  private fun requireActivity(promise: Promise?, method: String): android.app.Activity? {
+    val activity = reactContext.currentActivity
+    if (activity != null) return activity
+    val message =
+      "Current activity is not available. Call `$method` from a foreground screen (UI-attached React instance)."
+    if (promise != null) {
+      promise.reject("no_activity", message)
+    } else {
+      sendEvent("onError", message)
+    }
+    return null
+  }
 
   private fun ReadableMap.toNonNullStringAnyMap(): Map<String, Any> {
     val raw = this.toHashMap()
@@ -82,14 +109,51 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun initWithApiKeyAndUserId(apiKey: String, userId: String, promise: Promise) {
-    val activity = reactContext.currentActivity
-    if (activity == null) {
-      promise.reject("no_activity", "Current activity is not available")
+    val activity = requireActivity(promise, "initWithApiKeyAndUserId") ?: return
+
+    val safeApiKey = apiKey.trim()
+    val safeUserId = userId.trim()
+    if (safeApiKey.isEmpty()) {
+      promise.reject("invalid_args", "apiKey is required")
+      return
+    }
+    if (safeUserId.isEmpty()) {
+      promise.reject("invalid_args", "userId is required")
       return
     }
 
-    configuredApiKey = apiKey
-    configuredUserId = userId
+    if (initInProgress) {
+      promise.reject("init_in_progress", "RapidoReach initialization is already in progress.")
+      return
+    }
+
+    if (isInitialized) {
+      if (configuredApiKey != null && configuredApiKey != safeApiKey) {
+        promise.reject(
+          "already_initialized",
+          "RapidoReach is already initialized with a different apiKey. Restart the app to reinitialize."
+        )
+        return
+      }
+      configuredApiKey = safeApiKey
+      if (configuredUserId != safeUserId) {
+        configuredUserId = safeUserId
+        RapidoReachSdk.setUserIdentifier(safeUserId) { err ->
+          if (err != null) {
+            promise.reject("set_user_identifier_error", err.description ?: err.code)
+          } else {
+            promise.resolve(null)
+          }
+          Unit
+        }
+      } else {
+        promise.resolve(null)
+      }
+      return
+    }
+
+    configuredApiKey = safeApiKey
+    configuredUserId = safeUserId
 
     val options = RrInitOptions(
       navBarColor,
@@ -100,55 +164,77 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
       false
     )
 
-    RapidoReachSdk.initialize(
-      apiKey,
-      userId,
-      activity,
-      { rewards -> handleRewardCallback(rewards) },
-      { error ->
-        sendEvent("onError", error.description ?: error.code)
-        emitNetworkLog(
-          name = "initialize",
-          method = "INIT",
-          url = null,
-          error = error.description ?: error.code
-        )
-        promise.reject("init_error", error.description ?: error.code)
-        Unit
-      },
-      {
-        isInitialized = true
-        surveyAvailable = RapidoReach.getInstance().isSurveyAvailable()
-        emitNetworkLog(
-          name = "initialize",
-          method = "INIT",
-          url = null,
-          responseBody = mapOf("status" to "initialized")
-        )
-        promise.resolve(null)
-        Unit
-      },
-      { contentEvent ->
-        handleContentEvent(contentEvent)
-        Unit
-      },
-      options
-    )
+    initInProgress = true
+    try {
+      RapidoReachSdk.initialize(
+        safeApiKey,
+        safeUserId,
+        activity,
+        { rewards -> handleRewardCallback(rewards) },
+        { error ->
+          isInitialized = false
+          initInProgress = false
+          sendEvent("onError", error.description ?: error.code)
+          emitNetworkLog(
+            name = "initialize",
+            method = "INIT",
+            url = null,
+            error = error.description ?: error.code
+          )
+          promise.reject("init_error", error.description ?: error.code)
+          Unit
+        },
+        {
+          isInitialized = true
+          initInProgress = false
+          try {
+            apiEndpoint?.let { RapidoReach.getInstance().setApiEndpoint(it) }
+          } catch (_: Exception) {
+          }
+          surveyAvailable = try {
+            RapidoReach.getInstance().isSurveyAvailable()
+          } catch (_: Exception) {
+            false
+          }
+          emitNetworkLog(
+            name = "initialize",
+            method = "INIT",
+            url = null,
+            responseBody = mapOf("status" to "initialized")
+          )
+          promise.resolve(null)
+          Unit
+        },
+        { contentEvent ->
+          handleContentEvent(contentEvent)
+          Unit
+        },
+        options
+      )
+    } catch (e: Exception) {
+      isInitialized = false
+      initInProgress = false
+      promise.reject("init_error", e.message ?: e.toString(), e)
+      return
+    }
 
-    RapidoReach.getInstance().setRapidoReachSurveyAvailableListener(object :
-      RapidoReachSurveyAvailableListener {
-      override fun rapidoReachSurveyAvailable(surveyAvailable: Boolean) {
-        this@RNRapidoReachModule.surveyAvailable = surveyAvailable
-        sendEvent("rapidoreachSurveyAvailable", surveyAvailable)
-      }
-    })
-
-    // Ensure lifecycle hooks are aligned with the native SDK
-    RapidoReach.getInstance().onResume(activity)
+    try {
+      RapidoReach.getInstance().setRapidoReachSurveyAvailableListener(object :
+        RapidoReachSurveyAvailableListener {
+        override fun rapidoReachSurveyAvailable(surveyAvailable: Boolean) {
+          this@RNRapidoReachModule.surveyAvailable = surveyAvailable
+          sendEvent("rapidoreachSurveyAvailable", surveyAvailable)
+        }
+      })
+      // Ensure lifecycle hooks are aligned with the native SDK
+      RapidoReach.getInstance().onResume(activity)
+    } catch (_: Exception) {
+    }
   }
 
   @ReactMethod
   fun setUserIdentifier(userId: String, promise: Promise) {
+    if (!requireInitialized(promise, "setUserIdentifier")) return
     configuredUserId = userId
     RapidoReachSdk.setUserIdentifier(userId) { error ->
       if (error != null) {
@@ -163,36 +249,59 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   @ReactMethod
   fun setNavBarColor(barColor: String) {
     navBarColor = barColor
-    RapidoReach.getInstance().setNavigationBarColor(barColor)
+    if (!isInitialized) return
+    try {
+      RapidoReach.getInstance().setNavigationBarColor(barColor)
+    } catch (e: Exception) {
+      sendEvent("onError", e.message ?: e.toString())
+    }
   }
 
   @ReactMethod
   fun setNavBarText(text: String) {
     navBarText = text
-    RapidoReach.getInstance().setNavigationBarText(text)
+    if (!isInitialized) return
+    try {
+      RapidoReach.getInstance().setNavigationBarText(text)
+    } catch (e: Exception) {
+      sendEvent("onError", e.message ?: e.toString())
+    }
   }
 
   @ReactMethod
   fun setNavBarTextColor(textColor: String) {
     navBarTextColor = textColor
-    RapidoReach.getInstance().setNavigationBarTextColor(textColor)
+    if (!isInitialized) return
+    try {
+      RapidoReach.getInstance().setNavigationBarTextColor(textColor)
+    } catch (e: Exception) {
+      sendEvent("onError", e.message ?: e.toString())
+    }
   }
 
   @ReactMethod
   fun updateBackend(baseURL: String, rewardHashSalt: String?, promise: Promise) {
+    val safeBaseUrl = baseURL.trim()
+    if (safeBaseUrl.isEmpty()) {
+      promise.reject("invalid_args", "baseURL is required")
+      return
+    }
+    apiEndpoint = safeBaseUrl
     try {
-      RapidoReach.getInstance().setApiEndpoint(baseURL)
+      if (isInitialized) {
+        RapidoReach.getInstance().setApiEndpoint(safeBaseUrl)
+      }
       emitNetworkLog(
         name = "updateBackend",
         method = "CONFIG",
-        url = baseURL
+        url = safeBaseUrl
       )
       promise.resolve(null)
     } catch (e: Exception) {
       emitNetworkLog(
         name = "updateBackend",
         method = "CONFIG",
-        url = baseURL,
+        url = safeBaseUrl,
         error = e.message ?: e.toString()
       )
       promise.reject("update_backend_error", e.message, e)
@@ -215,16 +324,33 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun showRewardCenter() {
-    RapidoReach.getInstance().showRewardCenter()
+    requireActivity(null, "showRewardCenter") ?: return
+    if (!requireInitialized(null, "showRewardCenter")) return
+    try {
+      RapidoReach.getInstance().showRewardCenter()
+    } catch (e: Exception) {
+      sendEvent("onError", e.message ?: e.toString())
+    }
   }
 
   @ReactMethod
   fun isSurveyAvailable(cb: Callback) {
-    cb.invoke(RapidoReach.getInstance().isSurveyAvailable())
+    if (!isInitialized) {
+      sendEvent("onError", "RapidoReach not initialized. Call initWithApiKeyAndUserId first.")
+      cb.invoke(false)
+      return
+    }
+    try {
+      cb.invoke(RapidoReach.getInstance().isSurveyAvailable())
+    } catch (e: Exception) {
+      sendEvent("onError", e.message ?: e.toString())
+      cb.invoke(false)
+    }
   }
 
   @ReactMethod
   fun sendUserAttributes(attributes: ReadableMap, clearPrevious: Boolean, promise: Promise) {
+    if (!requireInitialized(promise, "sendUserAttributes")) return
     val url = buildUrl("/api/sdk/v2/user_attributes", includeAuthQuery = false)
     val safeAttributes = attributes.toNonNullStringAnyMap()
     val requestBody = mutableMapOf<String, Any>(
@@ -260,6 +386,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun getPlacementDetails(tag: String, promise: Promise) {
+    if (!requireInitialized(promise, "getPlacementDetails")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/details", includeAuthQuery = true)
     RapidoReachSdk.getPlacementDetails(tag) { result ->
       result.fold(
@@ -287,6 +414,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun listSurveys(tag: String, promise: Promise) {
+    if (!requireInitialized(promise, "listSurveys")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/surveys", includeAuthQuery = true)
     RapidoReachSdk.listSurveys(tag) { result ->
       result.fold(
@@ -314,6 +442,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun hasSurveys(tag: String, promise: Promise) {
+    if (!requireInitialized(promise, "hasSurveys")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/surveys", includeAuthQuery = true)
     RapidoReachSdk.hasSurveys(tag) { result ->
       result.fold(
@@ -341,6 +470,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun canShowContent(tag: String, promise: Promise) {
+    if (!requireInitialized(promise, "canShowContent")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/can_show", includeAuthQuery = true)
     var settled = false
     val canShow = RapidoReachSdk.canShowContentForPlacement(tag) { error ->
@@ -370,6 +500,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun canShowSurvey(tag: String, surveyId: String, promise: Promise) {
+    if (!requireInitialized(promise, "canShowSurvey")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/surveys/$surveyId/can_show", includeAuthQuery = true)
     RapidoReachSdk.canShowSurvey(tag, surveyId) { result ->
       result.fold(
@@ -397,6 +528,8 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun showSurvey(tag: String, surveyId: String, customParams: ReadableMap?, promise: Promise) {
+    requireActivity(promise, "showSurvey") ?: return
+    if (!requireInitialized(promise, "showSurvey")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/surveys/$surveyId/show", includeAuthQuery = false)
     val safeCustomParams = customParams.toNonNullStringAnyMapOrNull()
     val requestBody = mutableMapOf<String, Any?>(
@@ -450,6 +583,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun fetchQuickQuestions(tag: String, promise: Promise) {
+    if (!requireInitialized(promise, "fetchQuickQuestions")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/quick_questions", includeAuthQuery = true)
     RapidoReachSdk.fetchQuickQuestions(tag) { result ->
       result.fold(
@@ -477,6 +611,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun hasQuickQuestions(tag: String, promise: Promise) {
+    if (!requireInitialized(promise, "hasQuickQuestions")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/quick_questions", includeAuthQuery = true)
     RapidoReachSdk.fetchQuickQuestions(tag) { result ->
       result.fold(
@@ -507,6 +642,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun answerQuickQuestion(tag: String, questionId: String, answer: Dynamic, promise: Promise) {
+    if (!requireInitialized(promise, "answerQuickQuestion")) return
     val url = buildUrl("/api/sdk/v2/placements/$tag/quick_questions/$questionId/answer", includeAuthQuery = false)
     val answerValue = dynamicToAny(answer)
     if (answerValue == null) {
@@ -615,7 +751,11 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   }
 
   private fun buildUrl(path: String, includeAuthQuery: Boolean): String {
-    val base = RapidoReach.getProxyBaseUrl().trimEnd('/')
+    val base = try {
+      RapidoReach.getProxyBaseUrl().trimEnd('/')
+    } catch (_: Exception) {
+      (apiEndpoint ?: "").trimEnd('/')
+    }
     val normalized = if (path.startsWith("/")) path else "/$path"
     val builder = Uri.parse(base + normalized).buildUpon()
     if (includeAuthQuery) {

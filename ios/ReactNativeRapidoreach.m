@@ -4,7 +4,7 @@
 
 @interface RCT_EXTERN_MODULE(RNRapidoReach, NSObject)
 
-RCT_EXTERN_METHOD(initWithApiKeyAndUserId:(NSString *)apiKey userId:(NSString *)userId)
+RCT_EXTERN_METHOD(initWithApiKeyAndUserId:(NSString *)apiKey userId:(NSString *)userId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(showRewardCenter)
 RCT_EXTERN_METHOD(setNavBarColor:(NSString *)barColor)
 RCT_EXTERN_METHOD(setNavBarText:(NSString *)text)
