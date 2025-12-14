@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "10.0" }
+  s.platforms    = { :ios => "15.1" }
   s.source       = { :git => "https://github.com/rapidoreach/ReactNativeSDK.git", :tag => "#{s.version}" }
 
   
@@ -18,5 +18,5 @@ Pod::Spec.new do |s|
   
 
   s.dependency "React-Core"
-  s.dependency 'RapidoReachSDK', '1.0.2'
+  s.dependency 'RapidoReach', '1.0.6'
 end

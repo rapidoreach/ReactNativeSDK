@@ -12,6 +12,9 @@ Sign-up for a new developer account and create a new app [here](https://www.rapi
 
 `$ cd ios && pod install && cd ..` # CocoaPods on iOS needs this extra step
 
+> This wrapper bundles RapidoReach Android SDK 1.0.2 (minSdk 23) and iOS SDK 1.0.6 (iOS 15.1+).
+> React Native tooling has been updated to React 19 / React Native 0.83.x for both the library and the example app.
+
 We are all set up! Now let's use the module.
 
 ## Usage
@@ -120,7 +123,7 @@ this.rapidoreachSurveyAvailableListener = RapidoReachEventEmitter.addListener(
 Implement the callback:
 ```javascript
 rapidoreachSurveyAvailable = (surveyAvailable) => {
-  if (surveyAvailable == "true") {
+  if (surveyAvailable) {
     console.log('rapidoreach survey is available');
   } else {
     console.log('rapidoreach survey is NOT available');
@@ -148,6 +151,32 @@ We provide several methods to customize the navigation bar to feel like your app
     RapidoReach.setNavBarText('#211548');
     RapidoReach.setNavBarTextColor('#FFFFFF');
 ```
+
+### Additional APIs
+
+The wrapper now exposes the newer native SDK capabilities:
+
+- `updateBackend(baseURL, rewardHashSalt?)` (staging/regional backends)
+- `sendUserAttributes(attributes, clearPrevious?)`
+- `setUserIdentifier(userId)`
+- Placement helpers: `getPlacementDetails(tag)`, `listSurveys(tag)`, `hasSurveys(tag)`, `canShowSurvey(tag, surveyId)`, `showSurvey(tag, surveyId, customParams?)`
+- Quick Questions: `fetchQuickQuestions(tag)`, `hasQuickQuestions(tag)`, `answerQuickQuestion(tag, questionId, answer)`
+
+### Network logging (debug)
+
+To stream full SDK network calls (including base URL) into JS, enable logging and subscribe to `rapidoreachNetworkLog`:
+
+```js
+import RapidoReach, { RapidoReachEventEmitter } from '@rapidoreachsdk/react-native-rapidoreach';
+
+RapidoReach.enableNetworkLogging(true);
+
+const sub = RapidoReachEventEmitter.addListener('rapidoreachNetworkLog', (entry) => {
+  console.log(entry); // { name, method, url, requestBody?, responseBody?, error?, timestampMs }
+});
+```
+
+You can also read the current backend base URL via `await RapidoReach.getBaseUrl()`.
 
 ## Contact
 Please send all questions, concerns, or bug reports to admin@rapidoreach.com.
@@ -181,11 +210,9 @@ limitations:
 
 - You cannot pass custom attributes during initialization
 - No tests implemented yet
-- Minimum iOS is 9.0 and minimum Android version is 16
+- Minimum iOS is 15.1 (React Native 0.83 requirement) and minimum Android version is 23 (native SDK requirement; RN template minSdk is 24)
 
 For other RapidoReach products, see
 [RapidoReach docs](https://www.rapidoreach.com/docs).
 
 # ReactNativeSDK
-
-

@@ -1,21 +1,43 @@
-require_relative '../node_modules/react-native/scripts/react_native_pods'
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
 
-platform :ios, '11.0'
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
 
 target 'ReactNativeRapidoreachExample' do
   config = use_native_modules!
 
-  use_react_native!(:path => config["reactNativePath"])
+  # Temporary fallback for RapidoReach 1.0.6 while CocoaPods trunk/CDN propagation completes.
+  # If a local checkout exists at `../../../cbiossdk`, prefer that; otherwise use git tag `1.0.6`.
+  rapido_reach_local = File.expand_path("../../../cbiossdk", __dir__)
+  if File.exist?(File.join(rapido_reach_local, "RapidoReach.podspec"))
+    pod "RapidoReach", :path => rapido_reach_local
+  else
+    pod "RapidoReach", :git => "https://github.com/rapidoreach/cbiossdk.git", :tag => "1.0.6"
+  end
 
-      pod 'rapidoreachsdk-react-native-rapidoreach', :path => '../..'
-  
-  # Enables Flipper.
-  #
-  # Note that if you have use_frameworks! enabled, Flipper will not work and
-  # you should disable these next few lines.
-  use_flipper!({ 'Flipper' => '0.74.0' })
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
   post_install do |installer|
-    flipper_post_install(installer)
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
   end
 end

@@ -1,40 +1,54 @@
-buildscript {
-    repositories {
-        google()
-        jcenter()
-    }
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
 
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
-    }
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
 }
 
-apply plugin: 'com.android.library'
-
 android {
-    compileSdkVersion 29
-    buildToolsVersion '29.0.3'
+    namespace "com.rapidoreach"
+
+    compileSdk safeExtGet("compileSdkVersion", 34)
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdkVersion safeExtGet("minSdkVersion", 23)
+        targetSdkVersion safeExtGet("targetSdkVersion", 34)
         versionCode 1
         versionName "1.0"
     }
-    lintOptions {
+
+    lint {
         abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
 repositories {
     google()
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url "https://jitpack.io" }
+    flatDir {
+        dirs "libs"
+    }
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'
-    implementation 'com.google.android.gms:play-services-ads:15.0.0'
-    implementation 'com.github.vikash766:cbofferwallsdk:1.0.4'
-    implementation 'androidx.annotation:annotation:1.1.0'
+    // The version of react-native is set by the consuming app's React Native Gradle Plugin.
+    implementation "com.facebook.react:react-android"
+
+    // Bundled native Android SDK.
+    implementation(name: "Rapidoreach-1.0.2", ext: "aar")
+
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "androidx.annotation:annotation:1.7.1"
+    implementation "com.google.android.gms:play-services-ads-identifier:18.1.0"
+    implementation "com.google.android.gms:play-services-appset:16.1.0"
 }
