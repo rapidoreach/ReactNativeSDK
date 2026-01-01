@@ -8,9 +8,9 @@ PODS:
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
-  - RapidoReach (1.0.8)
-  - rapidoreachsdk-react-native-rapidoreach (1.1.0):
-    - RapidoReach (= 1.0.8)
+  - RapidoReach (1.0.9)
+  - rapidoreachsdk-react-native-rapidoreach (1.0.9):
+    - RapidoReach (= 1.0.9)
     - React-Core
   - RCT-Folly (2024.11.18.00):
     - boost
@@ -2802,8 +2802,8 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 212e0ea510c3590a59623c8ec9b800d34afceeb1
-  RapidoReach: 9a18fc4ef9167f1947f2ff6d2502de2322352426
-  rapidoreachsdk-react-native-rapidoreach: ada303f2f945fa3ab96a243dcde1880fd84dafa4
+  RapidoReach: 66d3a03d5d65dd69eab122c4f100b5e8be073bc0
+  rapidoreachsdk-react-native-rapidoreach: 61522894ee32544b5b68dfeb45ac9a06bb9d4332
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: 2b70c6e3abe00396cefd8913efbf6a2db01a2b36
   RCTRequired: f3540eee8094231581d40c5c6d41b0f170237a81
@@ -2877,6 +2877,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 6ca93c8c13f56baeec55eb608577619b17a4d64e
 
-PODFILE CHECKSUM: ab7643d961c705e5fa207e776cf483675b96026c
+PODFILE CHECKSUM: d948827454777bd46f3a2ef6e93474885bd59e70
 
 COCOAPODS: 1.16.2

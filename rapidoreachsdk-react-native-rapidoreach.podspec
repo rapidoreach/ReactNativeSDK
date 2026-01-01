@@ -18,5 +18,5 @@ Pod::Spec.new do |s|
   
 
   s.dependency "React-Core"
-  s.dependency 'RapidoReach', '1.0.8'
+  s.dependency 'RapidoReach', '1.0.9'
 end
