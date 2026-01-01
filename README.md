@@ -1,6 +1,6 @@
 # @rapidoreachsdk/react-native-rapidoreach
 
-Latest release: `1.0.8` (includes improved error guards, safer listeners, and the bundled AAR).
+Latest release: `1.0.8` (includes improved error guards, safer listeners, and the Maven Central Android SDK).
 
 ## Before you start
 
@@ -19,11 +19,11 @@ Then install iOS pods:
 `cd ios && pod install && cd ..`
 
 Notes:
-- Android: this wrapper bundles `android/libs/RapidoReach-1.0.2.aar` so you don't need an external Maven repo.
+- Android: this wrapper depends on Maven Central (`com.rapidoreach:cbofferwallsdk:1.1.0`).
 - iOS: this wrapper depends on the CocoaPods SDK `RapidoReach 1.0.8`.
 - React Native: tested with React 19 / React Native 0.83.x.
 
-The packaged AAR is already part of this project, so you can build/publish your React Native app without any GitHub Packages or Maven credentials.
+The Android SDK is fetched from Maven Central, so you don't need any credentials.
 
 ### Troubleshooting installs
 

@@ -41,8 +41,7 @@ dependencies {
     // The version of react-native is set by the consuming app's React Native Gradle Plugin.
     implementation "com.facebook.react:react-android"
 
-    // Bundled native Android SDK.
-    implementation files("libs/Rapidoreach-1.0.2.aar")
+    implementation "com.rapidoreach:cbofferwallsdk:1.1.0"
 
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "androidx.annotation:annotation:1.7.1"
