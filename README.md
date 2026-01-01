@@ -1,6 +1,6 @@
 # @rapidoreachsdk/react-native-rapidoreach
 
-Latest release: `1.0.8` (includes improved error guards, safer listeners, and the Maven Central Android SDK).
+Latest release: `1.0.9` (includes improved error guards, safer listeners, and the Maven Central Android SDK).
 
 ## Before you start
 
@@ -20,14 +20,14 @@ Then install iOS pods:
 
 Notes:
 - Android: this wrapper depends on Maven Central (`com.rapidoreach:cbofferwallsdk:1.1.0`).
-- iOS: this wrapper depends on the CocoaPods SDK `RapidoReach 1.0.8`.
+- iOS: this wrapper depends on the CocoaPods SDK `RapidoReach 1.0.9`.
 - React Native: tested with React 19 / React Native 0.83.x.
 
 The Android SDK is fetched from Maven Central, so you don't need any credentials.
 
 ### Troubleshooting installs
 
-- iOS CocoaPods: if you see `None of your spec sources contain a spec satisfying the dependency: RapidoReach (= 1.0.8)`, run `pod repo update` then `pod install` again.
+- iOS CocoaPods: if you see `None of your spec sources contain a spec satisfying the dependency: RapidoReach (= 1.0.9)`, run `pod repo update` then `pod install` again.
 - Android build “Cannot run program node”: make sure Node.js is installed. You can also set `NODE_BINARY=/absolute/path/to/node`.
 
 ## Usage
