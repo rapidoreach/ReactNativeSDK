@@ -3,7 +3,7 @@ import Foundation
 import SafariServices
 import UIKit
 import React
-import RapidoReach
+import RapidoreachNative
 @objc(RNRapidoReach)
 
 class RNRapidoReach: NSObject {
@@ -20,6 +20,7 @@ class RNRapidoReach: NSObject {
   private var pendingBackendURL: URL?
   private var pendingRewardHashSalt: String?
   private var networkLoggingEnabled: Bool = false
+  private var v2Client: RapidoReachV2?
   private var previousLoggerSink: ((RapidoReachLogLevel, String) -> Void)?
   private var previousLoggerLevel: RapidoReachLogLevel?
 
@@ -357,6 +358,186 @@ class RNRapidoReach: NSObject {
       url: url.absoluteString
     )
     resolve(nil)
+  }
+
+  @objc
+  func initializeV2(
+    _ input: NSDictionary,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let placementId = input["placementId"] as? String,
+          !placementId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          let externalUserId = input["externalUserId"] as? String,
+          !externalUserId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      reject("invalid_args", "placementId and externalUserId are required", nil)
+      return
+    }
+    let optionValues = input["options"] as? [String: Any] ?? [:]
+    let client = RapidoReachV2(baseURL: RapidoReachConfiguration.shared.baseURL)
+    client.onEvent = { event in
+      RapidoReachEventEmitter.shared?.rapidoreachV2Event(self.v2EventDictionary(event) as NSDictionary)
+    }
+    v2Client?.destroy()
+    v2Client = client
+    let options = RapidoReachV2Options(
+      environment: .init(rawValue: (optionValues["environment"] as? String ?? "production").lowercased()),
+      language: optionValues["language"] as? String,
+      consent: .init(rawValue: (optionValues["consent"] as? String ?? "UNKNOWN").uppercased()),
+      attStatus: .init(rawValue: (optionValues["attStatus"] as? String ?? "NOT_APPLICABLE").uppercased()),
+      adSlotId: optionValues["adSlotId"] as? String
+    )
+    client.initialize(placementId: placementId, externalUserId: externalUserId, options: options) { [weak self] response in
+      self?.completeV2(response, resolve: resolve, reject: reject)
+    }
+  }
+
+  @objc
+  func refreshSessionV2(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let client = requireV2Client(reject) else { return }
+    client.refreshSession { [weak self] response in self?.completeV2(response, resolve: resolve, reject: reject) }
+  }
+
+  @objc
+  func revokeSessionV2(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let client = requireV2Client(reject) else { return }
+    client.revokeSession { [weak self] response in self?.completeV2Void(response, resolve: resolve, reject: reject) }
+  }
+
+  @objc
+  func getOffersV2(
+    _ adSlotId: NSString,
+    cursor: NSString?,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let client = requireV2Client(reject) else { return }
+    let safeAdSlotId = (adSlotId as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !safeAdSlotId.isEmpty else {
+      reject("invalid_args", "adSlotId is required", nil)
+      return
+    }
+    client.getOffers(adSlotId: safeAdSlotId, cursor: cursor as String?) { [weak self] response in
+      self?.completeV2(response, resolve: resolve, reject: reject)
+    }
+  }
+
+  @objc
+  func getRewardStatusV2(
+    _ offerId: NSString,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let client = requireV2Client(reject) else { return }
+    let safeOfferId = (offerId as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !safeOfferId.isEmpty else {
+      reject("invalid_args", "offerId is required", nil)
+      return
+    }
+    client.getRewardStatus(offerId: safeOfferId) { [weak self] response in
+      self?.completeV2(response, resolve: resolve, reject: reject)
+    }
+  }
+
+  @objc
+  func showOfferwallV2(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let client = requireV2Client(reject) else { return }
+    do {
+      try client.presentOfferwall(from: topMostController())
+      resolve(nil)
+    } catch {
+      rejectV2(error, reject: reject)
+    }
+  }
+
+  @objc
+  func showRewardedVideoV2(
+    _ adSlotId: NSString,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let client = requireV2Client(reject) else { return }
+    let safeAdSlotId = (adSlotId as String).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !safeAdSlotId.isEmpty else {
+      reject("invalid_args", "adSlotId is required", nil)
+      return
+    }
+    do {
+      try client.presentRewardedVideo(adSlotId: safeAdSlotId, from: topMostController())
+      resolve(nil)
+    } catch {
+      rejectV2(error, reject: reject)
+    }
+  }
+
+  @objc
+  func destroyV2() {
+    v2Client?.destroy()
+    v2Client = nil
+  }
+
+  private func requireV2Client(_ reject: @escaping RCTPromiseRejectBlock) -> RapidoReachV2? {
+    guard let client = v2Client, client.session != nil else {
+      reject("session_required", "Initialize RapidReach v2 first.", nil)
+      return nil
+    }
+    return client
+  }
+
+  private func completeV2<T: Encodable>(
+    _ response: Result<T, Error>,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.main.async {
+      switch response {
+      case .success(let value): resolve(self.v2EncodedObject(value))
+      case .failure(let error): self.rejectV2(error, reject: reject)
+      }
+    }
+  }
+
+  private func completeV2Void(
+    _ response: Result<Void, Error>,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    DispatchQueue.main.async {
+      switch response {
+      case .success: resolve(nil)
+      case .failure(let error): self.rejectV2(error, reject: reject)
+      }
+    }
+  }
+
+  private func v2EncodedObject<T: Encodable>(_ value: T) -> Any {
+    guard let data = try? JSONEncoder().encode(value),
+          let object = try? JSONSerialization.jsonObject(with: data) else { return [:] }
+    return object
+  }
+
+  private func rejectV2(_ error: Error, reject: @escaping RCTPromiseRejectBlock) {
+    let envelope = error as? RapidoReachV2ErrorEnvelope
+    reject(envelope?.code ?? "sdk_error", envelope?.message ?? error.localizedDescription, error)
+  }
+
+  private func v2EventDictionary(_ event: RapidoReachV2Event) -> [String: Any] {
+    var payload: [String: Any] = ["type": event.type.rawValue]
+    if let offerId = event.offerId { payload["offerId"] = offerId }
+    if let transactionId = event.transactionId { payload["transactionId"] = transactionId }
+    if let status = event.status { payload["status"] = status }
+    if let reward = event.reward { payload["reward"] = v2EncodedObject(reward) }
+    if let error = event.error { payload["error"] = v2EncodedObject(error) }
+    return payload
   }
   @objc
   func showRewardCenter() -> Void {
@@ -771,6 +952,11 @@ class RapidoReachEventEmitter: RCTEventEmitter {
       }
 
       @objc
+      func rapidoreachV2Event(_ payload: NSDictionary) {
+        sendEvent(withName: "rapidoreachV2Event", body: payload)
+      }
+
+      @objc
       func onError(code: String, message: String) {
         sendEvent(withName: "onError", body: ["code": code, "message": message])
       }
@@ -783,6 +969,7 @@ class RapidoReachEventEmitter: RCTEventEmitter {
         "onRewardCenterClosed",
         "rapidoreachSurveyAvailable",
         "rapidoreachNetworkLog",
+        "rapidoreachV2Event",
         "onError",
       ]
     }

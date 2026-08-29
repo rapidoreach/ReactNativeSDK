@@ -1,0 +1,188 @@
+{
+  "scenarioId": "rapidreach-sdk-v2-sandbox-001",
+  "contractVersion": "2.0.0",
+  "sdkVersion": "2.0.0",
+  "sessionRequests": {
+    "android": {
+      "placementId": "plc_sdk_android",
+      "adSlotId": "slot_sdk_offerwall",
+      "externalUserId": "sdk-user-001",
+      "platform": "android",
+      "sdkVersion": "2.0.0",
+      "packageBundleOrDomain": "com.example.rapidreach.sandbox",
+      "environment": "sandbox",
+      "consent": "GRANTED",
+      "attStatus": "NOT_APPLICABLE",
+      "language": "en-US"
+    },
+    "ios": {
+      "placementId": "plc_sdk_ios_001",
+      "adSlotId": "slot_sdk_offerwall",
+      "externalUserId": "sdk-user-001",
+      "platform": "ios",
+      "sdkVersion": "2.0.0",
+      "packageBundleOrDomain": "com.example.rapidreach.sandbox",
+      "environment": "sandbox",
+      "consent": "GRANTED",
+      "attStatus": "NOT_DETERMINED",
+      "language": "en-US"
+    }
+  },
+  "session": {
+    "sessionId": "ses_sdk_sandbox_0001",
+    "token": "opaque-session-token-0000000000000001",
+    "issuedAt": "2026-08-26T00:00:00.000Z",
+    "expiresAt": "2026-08-26T00:15:00.000Z",
+    "contractVersion": "2.0.0",
+    "minimumSdkVersion": "2.0.0",
+    "recommendedSdkVersion": "2.1.0",
+    "capabilities": {
+      "offerwall": true,
+      "offerApi": true,
+      "rewardStatus": true,
+      "surveywall": true,
+      "rewardedVideo": false
+    },
+    "hostedOfferwallUrl": "https://offers.sandbox.example.test/ofw/session#token=opaque-session-token",
+    "adSlots": [
+      {
+        "adSlotId": "slot_sdk_offerwall",
+        "name": "Sandbox Offerwall",
+        "type": "OFFERWALL",
+        "available": true
+      }
+    ]
+  },
+  "offerPage": {
+    "items": [
+      {
+        "offerId": "off_sdk_sandbox_001",
+        "campaignId": "cmp_sdk_sandbox_001",
+        "revisionId": "rev_sdk_sandbox_001",
+        "title": "Sandbox install",
+        "description": "Deterministic SDK contract offer.",
+        "tasks": [
+          {
+            "goalId": "install",
+            "title": "Install and open",
+            "state": "AVAILABLE",
+            "required": true,
+            "prerequisiteGoalIds": [],
+            "reward": {
+              "minorUnits": 1000,
+              "currency": "Sandbox Coins",
+              "decimals": 0
+            }
+          }
+        ],
+        "totalReward": {
+          "minorUnits": 1000,
+          "currency": "Sandbox Coins",
+          "decimals": 0
+        },
+        "progress": {
+          "state": "AVAILABLE",
+          "tasks": [],
+          "pending": {
+            "minorUnits": 0,
+            "currency": "Sandbox Coins",
+            "decimals": 0
+          },
+          "earned": {
+            "minorUnits": 0,
+            "currency": "Sandbox Coins",
+            "decimals": 0
+          },
+          "reversed": {
+            "minorUnits": 0,
+            "currency": "Sandbox Coins",
+            "decimals": 0
+          },
+          "updatedAt": "2026-08-26T00:00:00.000Z"
+        },
+        "expiresAt": "2026-08-27T00:00:00.000Z"
+      }
+    ],
+    "generatedAt": "2026-08-26T00:00:00.000Z",
+    "expiresAt": "2026-08-26T00:05:00.000Z",
+    "contractVersion": "2.0.0"
+  },
+  "events": [
+    {
+      "type": "offerClicked",
+      "offerId": "off_sdk_sandbox_001",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "type": "rewardPending",
+      "offerId": "off_sdk_sandbox_001",
+      "status": "PENDING"
+    },
+    {
+      "type": "rewardConfirmed",
+      "offerId": "off_sdk_sandbox_001",
+      "status": "COMPLETED",
+      "transactionId": "txn_sdk_sandbox_001",
+      "reward": {
+        "minorUnits": 1000,
+        "currency": "Sandbox Coins",
+        "decimals": 0
+      }
+    },
+    {
+      "type": "rewardConfirmed",
+      "offerId": "off_sdk_sandbox_001",
+      "status": "COMPLETED",
+      "transactionId": "txn_sdk_sandbox_001",
+      "duplicate": true,
+      "reward": {
+        "minorUnits": 1000,
+        "currency": "Sandbox Coins",
+        "decimals": 0
+      }
+    },
+    {
+      "type": "rewardReversed",
+      "offerId": "off_sdk_sandbox_001",
+      "status": "REVERSED",
+      "transactionId": "txn_sdk_sandbox_001",
+      "reward": {
+        "minorUnits": 1000,
+        "currency": "Sandbox Coins",
+        "decimals": 0
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": "package_mismatch",
+      "message": "The app identity does not match the placement.",
+      "fieldErrors": {},
+      "traceId": "trace_sdk_0001",
+      "retryable": false
+    },
+    {
+      "code": "sdk_version_blocked",
+      "message": "This SDK version is blocked.",
+      "fieldErrors": {},
+      "traceId": "trace_sdk_0002",
+      "retryable": false
+    },
+    {
+      "code": "network_error",
+      "message": "The request could not reach RapidReach.",
+      "fieldErrors": {},
+      "traceId": "trace_sdk_0003",
+      "retryable": true,
+      "retryAfterSeconds": 2
+    },
+    {
+      "code": "no_fill",
+      "message": "No eligible offer is currently available.",
+      "fieldErrors": {},
+      "traceId": "trace_sdk_0004",
+      "retryable": true,
+      "retryAfterSeconds": 60
+    }
+  ]
+}

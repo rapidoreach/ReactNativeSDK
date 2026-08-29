@@ -8,9 +8,9 @@ PODS:
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
-  - RapidoReach (1.0.9)
-  - rapidoreachsdk-react-native-rapidoreach (1.0.9):
-    - RapidoReach (= 1.0.9)
+  - RapidoReachNative (2.0.0)
+  - rapidoreachsdk-react-native-rapidoreach (2.0.0):
+    - RapidoReachNative (= 2.0.0)
     - React-Core
   - RCT-Folly (2024.11.18.00):
     - boost
@@ -2551,7 +2551,7 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - RapidoReach (from `/Users/Vikash/Documents/my/cbiossdk`)
+  - RapidoReachNative (from `/Users/Vikash/Documents/my/cbiossdk`)
   - "rapidoreachsdk-react-native-rapidoreach (from `../node_modules/@rapidoreachsdk/react-native-rapidoreach`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -2647,7 +2647,7 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v0.14.0
-  RapidoReach:
+  RapidoReachNative:
     :path: "/Users/Vikash/Documents/my/cbiossdk"
   rapidoreachsdk-react-native-rapidoreach:
     :path: "../node_modules/@rapidoreachsdk/react-native-rapidoreach"
@@ -2802,8 +2802,8 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 212e0ea510c3590a59623c8ec9b800d34afceeb1
-  RapidoReach: 66d3a03d5d65dd69eab122c4f100b5e8be073bc0
-  rapidoreachsdk-react-native-rapidoreach: 61522894ee32544b5b68dfeb45ac9a06bb9d4332
+  RapidoReachNative: 4319d4a5b64a0fffe386e01e1d8a898565c38ea5
+  rapidoreachsdk-react-native-rapidoreach: 3c618626f17cb8ca7382b458a8d97e2ff824eed6
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: 2b70c6e3abe00396cefd8913efbf6a2db01a2b36
   RCTRequired: f3540eee8094231581d40c5c6d41b0f170237a81
@@ -2877,6 +2877,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 6ca93c8c13f56baeec55eb608577619b17a4d64e
 
-PODFILE CHECKSUM: d948827454777bd46f3a2ef6e93474885bd59e70
+PODFILE CHECKSUM: 274c16af9d6f8a297aca9ddf64c95751da69c51a
 
 COCOAPODS: 1.16.2
