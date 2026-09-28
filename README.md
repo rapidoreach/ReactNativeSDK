@@ -2,6 +2,10 @@
 
 Latest release: `1.0.9` (includes improved error guards, safer listeners, and the Maven Central Android SDK).
 
+## Integrate with an AI coding agent
+
+Download the [React Native Agent Skill](https://docs.rapidoreach.com/downloads/rapidoreach-react-native-1.1.0.zip), the [verification skill](https://docs.rapidoreach.com/downloads/rapidoreach-verify-1.1.0.zip), or the [complete skill bundle](https://docs.rapidoreach.com/downloads/rapidoreach-agent-skills-1.1.0.zip). The [Agent Skills guide](https://docs.rapidoreach.com/docs/v2/sdk/ai-agent-skills) explains installation in Codex and Claude Code. Check the [current React Native guide](https://docs.rapidoreach.com/docs/v2/sdk/reactnativesdk) for native requirements.
+
 ## Before you start
 
 ### Get your API key
