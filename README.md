@@ -321,3 +321,14 @@ For other RapidoReach products, see
 [RapidoReach docs](https://docs.rapidoreach.com).
 
 # ReactNativeSDK
+# RapidReach React Native v2
+
+Version 2.0.0 exports the typed v2 facade from `src/v2.ts` and delegates all
+session, offer, reward-status, presentation, and event behavior to pinned native
+Android/iOS 2.0.0 SDKs. The JavaScript layer has no delivery, attribution,
+network, or reward business logic. Existing exports remain available as a
+compatibility surface for this major-version migration window.
+
+Use only public placement/ad-slot/external-user context. Reward values and
+completion are server-authoritative; never ship callback secrets, provider
+tokens, or client reward-signing material.

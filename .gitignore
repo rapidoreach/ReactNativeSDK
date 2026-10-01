@@ -33,6 +33,8 @@ project.xcworkspace
 #
 .idea
 .gradle
+.cxx/
+**/.cxx/
 local.properties
 android.iml
 
