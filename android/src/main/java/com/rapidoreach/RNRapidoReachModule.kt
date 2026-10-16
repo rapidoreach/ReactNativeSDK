@@ -28,6 +28,15 @@ import com.rapidoreach.rapidoreachsdk.RrPlacementDetails
 import com.rapidoreach.rapidoreachsdk.RrQuickQuestionPayload
 import com.rapidoreach.rapidoreachsdk.RrReward
 import com.rapidoreach.rapidoreachsdk.RrSurvey
+import com.rapidoreach.rapidoreachsdk.v2.RapidoReachV2Client
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Error
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Event
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Offer
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Options
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Progress
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Reward
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Session
+import com.rapidoreach.rapidoreachsdk.v2.RrV2Task
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.Unit
@@ -45,6 +54,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   private var configuredApiKey: String? = null
   private var configuredUserId: String? = null
   private var apiEndpoint: String? = null
+  private var v2Client: RapidoReachV2Client? = null
 
   init {
     reactContext.addLifecycleEventListener(this)
@@ -688,6 +698,119 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun initializeV2(input: ReadableMap, promise: Promise) {
+    val placementId = input.getString("placementId")?.trim().orEmpty()
+    val externalUserId = input.getString("externalUserId")?.trim().orEmpty()
+    if (placementId.isEmpty() || externalUserId.isEmpty()) {
+      promise.reject("invalid_args", "placementId and externalUserId are required")
+      return
+    }
+    val optionsMap = if (input.hasKey("options")) input.getMap("options") else null
+    val client = RapidoReachV2Client(
+      reactContext.applicationContext,
+      apiEndpoint?.takeIf { it.isNotBlank() } ?: "https://rorapps.rapidoreach.com"
+    )
+    client.setListener { event -> sendEvent("rapidoreachV2Event", event.toMap().toWritableMap()) }
+    v2Client?.destroy()
+    v2Client = client
+    val options = RrV2Options(
+      environment = enumValueOf((optionsMap?.getString("environment") ?: "production").uppercase()),
+      language = optionsMap?.getString("language"),
+      consent = enumValueOf((optionsMap?.getString("consent") ?: "UNKNOWN").uppercase()),
+      attStatus = enumValueOf((optionsMap?.getString("attStatus") ?: "NOT_APPLICABLE").uppercase()),
+      adSlotId = optionsMap?.getString("adSlotId"),
+    )
+    client.initialize(placementId, externalUserId, options) { outcome ->
+      completeV2(promise, outcome) { it.toMap().toWritableMap() }
+    }
+  }
+
+  @ReactMethod
+  fun refreshSessionV2(promise: Promise) {
+    val client = requireV2Client(promise) ?: return
+    client.refreshSession { outcome -> completeV2(promise, outcome) { it.toMap().toWritableMap() } }
+  }
+
+  @ReactMethod
+  fun revokeSessionV2(promise: Promise) {
+    val client = requireV2Client(promise) ?: return
+    client.revokeSession { outcome -> completeV2(promise, outcome) { null } }
+  }
+
+  @ReactMethod
+  fun getOffersV2(adSlotId: String, cursor: String?, promise: Promise) {
+    val client = requireV2Client(promise) ?: return
+    if (adSlotId.trim().isEmpty()) {
+      promise.reject("invalid_args", "adSlotId is required")
+      return
+    }
+    client.getOffers(adSlotId, cursor) { outcome ->
+      completeV2(promise, outcome) { page ->
+        mapOf<String, Any?>(
+          "items" to page.items.map { it.toMap() },
+          "nextCursor" to page.nextCursor,
+          "generatedAt" to page.generatedAt,
+          "expiresAt" to page.expiresAt,
+          "contractVersion" to page.contractVersion,
+        ).toWritableMap()
+      }
+    }
+  }
+
+  @ReactMethod
+  fun getRewardStatusV2(offerId: String, promise: Promise) {
+    val client = requireV2Client(promise) ?: return
+    if (offerId.trim().isEmpty()) {
+      promise.reject("invalid_args", "offerId is required")
+      return
+    }
+    client.getRewardStatus(offerId) { outcome ->
+      completeV2(promise, outcome) {
+        mapOf<String, Any?>(
+          "offerId" to it.offerId,
+          "progress" to it.progress.toMap(),
+          "supportEligible" to it.supportEligible,
+          "updatedAt" to it.updatedAt,
+        ).toWritableMap()
+      }
+    }
+  }
+
+  @ReactMethod
+  fun showOfferwallV2(promise: Promise) {
+    val client = requireV2Client(promise) ?: return
+    val currentActivity = requireActivity(promise, "showOfferwallV2") ?: return
+    try {
+      client.showOfferwall(currentActivity)
+      promise.resolve(null)
+    } catch (error: Throwable) {
+      promise.reject((error as? RrV2Error)?.code ?: "show_failed", error.message, error)
+    }
+  }
+
+  @ReactMethod
+  fun showRewardedVideoV2(adSlotId: String, promise: Promise) {
+    val client = requireV2Client(promise) ?: return
+    val currentActivity = requireActivity(promise, "showRewardedVideoV2") ?: return
+    if (adSlotId.trim().isEmpty()) {
+      promise.reject("invalid_args", "adSlotId is required")
+      return
+    }
+    try {
+      client.showRewardedVideo(currentActivity, adSlotId)
+      promise.resolve(null)
+    } catch (error: Throwable) {
+      promise.reject((error as? RrV2Error)?.code ?: "show_failed", error.message, error)
+    }
+  }
+
+  @ReactMethod
+  fun destroyV2() {
+    v2Client?.destroy()
+    v2Client = null
+  }
+
+  @ReactMethod
   fun addListener(eventName: String) {
     // Required for NativeEventEmitter on Android.
   }
@@ -735,6 +858,104 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
       .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
       .emit(eventName, params)
   }
+
+  private fun requireV2Client(promise: Promise): RapidoReachV2Client? {
+    val client = v2Client
+    if (client == null || client.getSession() == null) {
+      promise.reject("session_required", "Initialize RapidReach v2 first.")
+      return null
+    }
+    return client
+  }
+
+  private fun <T> completeV2(promise: Promise, outcome: kotlin.Result<T>, map: (T) -> Any?) {
+    outcome.fold(
+      onSuccess = { promise.resolve(map(it)) },
+      onFailure = { error -> promise.reject((error as? RrV2Error)?.code ?: "sdk_error", error.message, error) },
+    )
+  }
+
+  private fun RrV2Reward.toMap() = mapOf<String, Any?>(
+    "minorUnits" to minorUnits,
+    "currency" to currency,
+    "decimals" to decimals,
+  )
+
+  private fun RrV2Task.toMap() = mapOf<String, Any?>(
+    "goalId" to goalId,
+    "title" to title,
+    "state" to state,
+    "required" to required,
+    "reward" to reward.toMap(),
+  )
+
+  private fun RrV2Progress.toMap() = mapOf<String, Any?>(
+    "state" to state,
+    "tasks" to tasks.map { it.toMap() },
+    "pending" to pending.toMap(),
+    "earned" to earned.toMap(),
+    "reversed" to reversed.toMap(),
+    "updatedAt" to updatedAt,
+  )
+
+  private fun RrV2Offer.toMap() = mapOf<String, Any?>(
+    "offerId" to offerId,
+    "campaignId" to campaignId,
+    "revisionId" to revisionId,
+    "title" to title,
+    "description" to description,
+    "tasks" to tasks.map { it.toMap() },
+    "totalReward" to totalReward.toMap(),
+    "progress" to progress.toMap(),
+    "expiresAt" to expiresAt,
+  )
+
+  private fun RrV2Session.toMap() = mapOf<String, Any?>(
+    "sessionId" to sessionId,
+    "token" to token,
+    "issuedAt" to issuedAt,
+    "expiresAt" to expiresAt,
+    "contractVersion" to contractVersion,
+    "minimumSdkVersion" to minimumSdkVersion,
+    "recommendedSdkVersion" to recommendedSdkVersion,
+    "capabilities" to mapOf(
+      "offerwall" to capabilities.offerwall,
+      "offerApi" to capabilities.offerApi,
+      "rewardStatus" to capabilities.rewardStatus,
+      "surveywall" to capabilities.surveywall,
+      "rewardedVideo" to capabilities.rewardedVideo,
+    ),
+    "hostedOfferwallUrl" to hostedOfferwallUrl,
+    "hostedRewardedVideoUrl" to hostedRewardedVideoUrl,
+    "adSlots" to adSlots.map {
+      mapOf(
+        "adSlotId" to it.adSlotId,
+        "name" to it.name,
+        "type" to it.type,
+        "available" to it.available,
+        "unavailableReason" to it.unavailableReason,
+      )
+    },
+  )
+
+  private fun RrV2Event.toMap() = mapOf<String, Any?>(
+    "type" to type.name.lowercase().split('_').let { parts ->
+      parts.first() + parts.drop(1).joinToString("") { value -> value.replaceFirstChar(Char::uppercase) }
+    },
+    "offerId" to offerId,
+    "transactionId" to transactionId,
+    "status" to status,
+    "reward" to reward?.toMap(),
+    "error" to error?.let {
+      mapOf(
+        "code" to it.code,
+        "message" to it.message,
+        "retryable" to it.retryable,
+        "retryAfterSeconds" to it.retryAfterSeconds,
+        "traceId" to it.traceId,
+      )
+    },
+  )
 
   private fun stringifyForLog(value: Any?): String? {
     if (value == null) return null
@@ -830,6 +1051,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
         is String -> map.putString(key, value)
         is Boolean -> map.putBoolean(key, value)
         is Int -> map.putInt(key, value)
+        is Long -> map.putDouble(key, value.toDouble())
         is Double -> map.putDouble(key, value)
         is Float -> map.putDouble(key, value.toDouble())
         is Map<*, *> -> map.putMap(key, (value as Map<String, Any?>).toWritableMap())
@@ -848,6 +1070,7 @@ class RNRapidoReachModule(private val reactContext: ReactApplicationContext) :
         is String -> array.pushString(value)
         is Boolean -> array.pushBoolean(value)
         is Int -> array.pushInt(value)
+        is Long -> array.pushDouble(value.toDouble())
         is Double -> array.pushDouble(value)
         is Float -> array.pushDouble(value.toDouble())
         is Map<*, *> -> array.pushMap((value as Map<String, Any?>).toWritableMap())

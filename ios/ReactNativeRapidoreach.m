@@ -24,6 +24,14 @@ RCT_EXTERN_METHOD(fetchQuickQuestions:(NSString *)tag resolver:(RCTPromiseResolv
 RCT_EXTERN_METHOD(hasQuickQuestions:(NSString *)tag resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(answerQuickQuestion:(NSString *)tag questionId:(NSString *)questionId answer:(id)answer resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(updateBackend:(NSString *)baseURL rewardHashSalt:(NSString * _Nullable)rewardHashSalt resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(initializeV2:(NSDictionary *)input resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(refreshSessionV2:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(revokeSessionV2:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(getOffersV2:(NSString *)adSlotId cursor:(NSString * _Nullable)cursor resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(getRewardStatusV2:(NSString *)offerId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(showOfferwallV2:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(showRewardedVideoV2:(NSString *)adSlotId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(destroyV2)
 
 
 @end
@@ -37,5 +45,6 @@ RCT_EXTERN_METHOD(onRewardCenterOpened)
 RCT_EXTERN_METHOD(onRewardCenterClosed)
 RCT_EXTERN_METHOD(rapidoreachSurveyAvailable:(BOOL)available)
 RCT_EXTERN_METHOD(rapidoreachNetworkLog:(NSDictionary *)payload)
+RCT_EXTERN_METHOD(rapidoreachV2Event:(NSDictionary *)payload)
 
 @end

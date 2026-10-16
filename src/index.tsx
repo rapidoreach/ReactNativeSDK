@@ -1,5 +1,7 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
+export * from './v2';
+
 type RapidoreachType = {
   initWithApiKeyAndUserId(apiKey: string, userId: string): Promise<void> | void;
   setUserIdentifier(userId: string): Promise<void>;
